@@ -1,6 +1,6 @@
 #include "Canvas.h"
 
-#include "../Window/Window.h"
+#include "Window/Window.h"
 
 Canvas::Canvas(Pos pos, Size size, bool isFrame, wchar_t flushChar)
 	: pos(pos), size(size), isFrame(isFrame), canvas(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar)

@@ -2,10 +2,10 @@
 
 #include <vector>
 
-#include "../Window/Window.h"
+#include "Window/Window.h"
 #include "AppCollection.h"
 
-class WindowHandler;
+class AppHandler;
 
 #define CREATE_WINDOW(windowVec, windowEntity) windowVec.emplace_back(std::make_shared<Window>(windowEntity));
 
@@ -20,7 +20,7 @@ class App
 public:
 	App(AppCollection app, std::vector<std::shared_ptr<Window>>& _windowVec) : app(app), windowVec(_windowVec) {}
 
-	friend WindowHandler;
+	friend AppHandler;
 
 	inline void setWindowVec(std::vector<std::shared_ptr<Window>>& _windowVec) { windowVec = _windowVec; }
 	inline std::vector<std::shared_ptr<Window>>& getWindowVec() { return windowVec; }

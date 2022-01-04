@@ -1,6 +1,6 @@
 #include "IO.h"
 
-#include "WindowHandler.h"
+#include "AppHandler.h"
 
 /* Input *******************************************************/
 
@@ -17,20 +17,20 @@ void Input::run()
 	INPUT_RECORD InputRecord;
 	SetConsoleMode(inHandle, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT | ENABLE_PROCESSED_INPUT);
 	bool isFlush = false;
-	static WindowHandler& windowHandler = WindowHandler::get();
-	while (windowHandler.isRun)
+	static AppHandler& appHandler = AppHandler::get();
+	while (appHandler.isRun)
 	{
 		isFlush = false;
 
 		ReadConsoleInput(inHandle, &InputRecord, 1, &num);
 		switch (InputRecord.EventType) {
 		case KEY_EVENT:
-			isFlush |= windowHandler.keyEvent(InputRecord.Event.KeyEvent.wVirtualKeyCode, InputRecord.Event.KeyEvent.dwControlKeyState, InputRecord.Event.KeyEvent.bKeyDown);
+			isFlush |= appHandler.keyEvent(InputRecord.Event.KeyEvent.wVirtualKeyCode, InputRecord.Event.KeyEvent.dwControlKeyState, InputRecord.Event.KeyEvent.bKeyDown);
 			break;
 		}
 
 		if (isFlush)
-			windowHandler.update();
+			appHandler.update();
 	}
 }
 

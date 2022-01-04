@@ -4,7 +4,7 @@
 
 #include <functional>
 
-#include "../Window/Event.h"
+#include "Window/Event.h"
 #include "Canvas.h"
 
 #define CREATE_ELEMENTS(className , name, onclick) dynamic_cast<T&>(*this)

@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "Event.h"
-#include "../Graphics/Canvas.h"
-#include "../Graphics/Elements.h"
-#include "../App/AppCollection.h"
+#include "Graphics/Canvas.h"
+#include "Graphics/Elements.h"
+#include "App/AppCollection.h"
 
 #define WINDOW_API template <typename Tapp, typename Twindow> Window<Tapp, Twindow>
 

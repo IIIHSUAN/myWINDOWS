@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Graphics/Struct.h"
+#include "Graphics/Struct.h"
 
 typedef unsigned short WORD;
 

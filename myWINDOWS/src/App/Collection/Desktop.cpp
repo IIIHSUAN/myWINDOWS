@@ -2,16 +2,15 @@
 
 #include <Windows.h>
 
-#include "../../Window/WindowHandler.h"
+#include "AppHandler/AppHandler.h"
 
 DesktopWindow::DesktopWindow(App& app, int _id, std::wstring _name, Pos _pos, Size _size)
 	: Window(app, _id, _name, _pos, _size)
 {
 	Window::getCanvas().setBackground(background);
 
-	//PUSH_ELEMENTS(bPainter, Button(L"  Painter  ", { 70, 5 }, true));
-
-	//PUSH_ELEMENTS(bChess, Button(L"   Chess   ", { 70, 10 }, true));
+	PUSH_ELEMENTS(bPainter, Button(L"  Painter  ", { 70, 3 }, true));
+	PUSH_ELEMENTS(bChess, Button(L"   Chess   ", { 70, 10 }, true));
 
 
 	//app.create(DesktopWindow(app, 0, L"Sub Desktop", { 12,6 }, { MY_WINDOW_WIDTH,MY_WINDOW_HEIGHT }));

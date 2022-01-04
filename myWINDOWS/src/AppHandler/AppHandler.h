@@ -2,18 +2,17 @@
 
 #include <list>
 
-#include "IO.h"
-#include "../Game/Game.h"
-#include "../Image/Image.h"
-#include "../App/App.h"
-#include "../App/AppCollection.h"
-#include "../Graphics/Struct.h"
-#include "../Graphics/Canvas.h"
+#include "AppHandler/IO.h"
+#include "Image/Image.h"
+#include "App/App.h"
+#include "App/AppCollection.h"
+#include "Graphics/Struct.h"
+#include "Graphics/Canvas.h"
 
-class WindowHandler
+class AppHandler
 {
 public:
-	WindowHandler();
+	AppHandler();
 	
 	friend class Input;
 
@@ -24,9 +23,9 @@ public:
 
 	unsigned int isMsg = 0;
 
-	static WindowHandler& get() { return *windowHandler; }
+	static AppHandler& get() { return *appHandler; }
 private:
-	static WindowHandler* windowHandler;
+	static AppHandler* appHandler;
 	bool isRun = true;
 	Mouse& mouse = Mouse::get();
 

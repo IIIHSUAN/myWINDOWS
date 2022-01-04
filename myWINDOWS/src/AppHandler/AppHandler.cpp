@@ -1,17 +1,17 @@
 ﻿#include <iostream>
 #include <thread>
 
-#include "WindowHandler.h"
+#include "AppHandler.h"
 
 #include "../App/Collection/Desktop.h"
 #include "../App/Collection/Painter.h"
 
 
-WindowHandler* WindowHandler::windowHandler = new WindowHandler();
+AppHandler* AppHandler::appHandler = new AppHandler();
 
-WindowHandler::WindowHandler()
+AppHandler::AppHandler()
 {
-	eventCallback = std::bind(&WindowHandler::onEvent, this, std::placeholders::_1);
+	eventCallback = std::bind(&AppHandler::onEvent, this, std::placeholders::_1);
 
 	return;
 
@@ -26,19 +26,19 @@ WindowHandler::WindowHandler()
 	Sleep(1000);
 }
 
-void WindowHandler::run()
+void AppHandler::run()
 {
 	createApp(AppCollection::Desktop);
 	//createApp(AppCollection::Painter);
 
-	std::thread pollingThread(&WindowHandler::pollingUpdate, this);
+	std::thread pollingThread(&AppHandler::pollingUpdate, this);
 	std::thread inputThread([]() {	Input::get().run(); });
 
 	pollingThread.detach();
 	inputThread.join();
 }
 
-void WindowHandler::createApp(AppCollection name)
+void AppHandler::createApp(AppCollection name)
 {
 	switch (name)
 	{
@@ -72,7 +72,7 @@ void WindowHandler::createApp(AppCollection name)
 	t.detach();
 }
 
-void WindowHandler::pollingUpdate()
+void AppHandler::pollingUpdate()
 {
 	bool isNeedUpdate;
 	while (isRun)
@@ -89,7 +89,7 @@ void WindowHandler::pollingUpdate()
 	}
 }
 
-void WindowHandler::update(bool isFlush)
+void AppHandler::update(bool isFlush)
 {
 	static bool isUpdating;
 	if (isUpdating)
@@ -125,7 +125,7 @@ void WindowHandler::update(bool isFlush)
 	isUpdating = false;
 }
 
-void WindowHandler::onEvent(Event & e)  // from input
+void AppHandler::onEvent(Event & e)  // from input
 {
 	if (e.getType() != EventType::unknown)
 		for (auto app = appVec.rbegin(); app != appVec.rend();)
@@ -144,7 +144,7 @@ void WindowHandler::onEvent(Event & e)  // from input
 		}
 }
 
-bool WindowHandler::keyEvent(WORD key, DWORD ctrl, bool isPressed)
+bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPressed)
 {
 	if (!isPressed)
 		return false;

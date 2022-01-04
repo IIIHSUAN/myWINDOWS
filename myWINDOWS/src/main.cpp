@@ -1,17 +1,10 @@
-﻿#include "Window/WindowHandler.h"
+﻿#include "AppHandler/AppHandler.h"
 
 int main(int argc, char** args)
 {
 	// entry point;
-	auto& windowHandler = WindowHandler::get();
-	windowHandler.run();
+	auto& appHandler = AppHandler::get();
+	appHandler.run();
 
-	return 0;
-
-	Game* game = new Game();
-
-	game->run();
-
-	game->distroy();
 	return 0;
 }
