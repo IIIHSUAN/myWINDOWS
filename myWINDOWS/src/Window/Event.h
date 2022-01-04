@@ -28,9 +28,9 @@ protected:
 class MouseMoveEvent :public Event
 {
 public:
-	inline MouseMoveEvent(int x, int y, int offsetX, int offsetY, bool isMousePressed) : Event(EventType::mouseMove), isMousePressed(isMousePressed), pos({ x,y }), offset({ offsetX,offsetY }) {}
+	inline MouseMoveEvent(int x, int y, int offsetX, int offsetY, bool isMousePrs) : Event(EventType::mouseMove), isMousePrs(isMousePrs), pos({ x,y }), offset({ offsetX,offsetY }) {}
 
-	inline bool& getIsPressed() { return isMousePressed; }
+	inline bool& getIsPrs() { return isMousePrs; }
 	inline int& getMouseX() { return pos.x; }
 	inline int& getMouseY() { return pos.y; }
 	inline int& getOffsetX() { return offset.x; }
@@ -42,7 +42,7 @@ public:
 	inline void setPos(Pos _pos) { pos = _pos; }
 private:
 	Pos pos, offset;
-	bool isMousePressed;
+	bool isMousePrs;
 };
 
 

@@ -4,17 +4,19 @@ bool App::onEvent(Event & e)
 {
 	for (auto window = windowVec.rbegin(); window != windowVec.rend();)
 	{
+		bool opcode = false;
 		if ((*window)->onEvent(e))  // is handled
-			return true;
+			opcode = true;
 
 		if (!(*window)->getIsRun())
 		{
-			auto it = windowVec.erase(--window.base());
-			window = std::vector<std::shared_ptr<Window>>::reverse_iterator(it);	
+			window = std::vector<std::shared_ptr<Window>>::reverse_iterator(windowVec.erase(--window.base()));
 
 			if (windowVec.empty())  // no window exists
 				isRun = false;
 		}
+		else if (opcode)
+			return true;
 		else
 			window++;
 	}
@@ -30,11 +32,4 @@ bool App::pollingUpdate()
 
 	isNeedUpdate = false;
 	return b;
-}
-
-void App::createWindow(std::wstring name, Pos pos, Size size)
-{
-	if (pos == 0)
-		pos = subWindowPos, subWindowPos.x += 2, subWindowPos.y += 1;
-	windowVec.emplace_back(std::make_shared<Window>(*this, windowIdNum++, name, pos, size));
 }

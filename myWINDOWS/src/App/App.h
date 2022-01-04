@@ -31,16 +31,11 @@ public:
 	bool pollingUpdate();
 	inline void setPollingUpdate(bool b) { isNeedUpdate = b; }
 
-	virtual void run() = 0;
+	virtual void run() {}
 
-	void createWindow(std::wstring name, Pos pos, Size size);
-	inline void pushWindow(std::shared_ptr<Window>& window) { window->setId(windowIdNum++), windowVec.emplace_back(window); }
-protected:
-	// only child can create window
-
+	inline void pushWindow(std::shared_ptr<Window>& window) { windowVec.emplace_back(window); }
 private:
 	AppCollection app;
-	unsigned int windowIdNum = 0;
 	Pos subWindowPos = { 0,0 };
 	bool isRun = true, isNeedUpdate = true;
 	std::vector<std::shared_ptr<Window>>& windowVec;  // ref of the windowVec, only for onEvent & pollingUpdate

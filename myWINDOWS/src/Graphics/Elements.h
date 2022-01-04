@@ -27,9 +27,9 @@ public:
 	template <typename T> inline T& get() {	return dynamic_cast<T&>(*this); }
 
 	inline void flush(wchar_t flushChar = 0) { flush_impl(flushChar); }
-	inline bool onMouseMove(App& App, Window& Window, MouseMoveEvent& e) { return onMouseMove_impl(App, Window, e); }
-	inline bool onMouseClk(App& App, Window& Window, MousePrsEvent& e) { return onMouseClk_impl(App, Window, e); }
-	inline bool onMouseRls(App& App, Window& Window, MouseRlsEvent& e) { return onMouseRls_impl(App, Window, e); }
+	inline bool onMouseMove(MouseMoveEvent& e) { return onMouseMove_impl(e); }
+	inline bool onMousePrs(MousePrsEvent& e) { return onMousePrs_impl(e); }
+	inline bool onMouseRls(MouseRlsEvent& e) { return onMouseRls_impl(e); }
 
 	inline void setPos(Pos _pos) { canvas.setPos(_pos); }
 	inline void setVisible(bool b) { isVisible = b; }
@@ -39,14 +39,14 @@ public:
 	inline const unsigned int& getId() { return id; }
 protected:
 	virtual void flush_impl(wchar_t flushChar) = 0;
-	virtual bool onMouseMove_impl(App& App, Window& Window, MouseMoveEvent& e) = 0;
-	virtual bool onMouseClk_impl(App& App, Window& Window, MousePrsEvent& e) = 0;
-	virtual bool onMouseRls_impl(App& App, Window& Window, MouseRlsEvent& e) = 0;
+	virtual bool onMouseMove_impl(MouseMoveEvent& e) = 0;
+	virtual bool onMousePrs_impl(MousePrsEvent& e) = 0;
+	virtual bool onMouseRls_impl(MouseRlsEvent& e) = 0;
 
 	Canvas canvas;
 private:
 	ElementsType type;
-	bool isMouseClk = false, isMouseMove = false, isVisible = true;
+	bool isMousePrs = false, isMouseMove = false, isVisible = true;
 	unsigned int id;
 
 	inline void setId(const unsigned int& i) { id = i; }
@@ -61,21 +61,21 @@ public:
 		
 	inline void setString(std::wstring _str, wchar_t flushChar = 0) { str = _str; flush(flushChar); }
 	
-	void onHover(std::function<bool(App& App, Window& Window)> func) { mouseMoveCallback = func; }
-	void onPressed(std::function<bool(App& App, Window& Window)> func) { mouseClkCallback = func; }
-	void onclick(std::function<bool(App& App, Window& Window)> func) { mouseRlsCallback = func; }
+	void onhover(std::function<bool(Button&)> func) { mouseMoveCallback = func; }
+	void onpress(std::function<bool(Button&)> func) { mousePrsCallback = func; }
+	void onclick(std::function<bool(Button&)> func) { mouseRlsCallback = func; }
 private:
 	std::wstring str, originStr;
-	bool isHover = false, isHoverFunc = false, isClk = false;
+	bool isHover = false, isHoverFunc = false, isPrs = false;
 
 	virtual void flush_impl(wchar_t flushChar) override;
-	virtual bool onMouseMove_impl(App& App, Window& Window, MouseMoveEvent& e) override;
-	virtual bool onMouseClk_impl(App& App, Window& Window, MousePrsEvent& e) override;
-	virtual bool onMouseRls_impl(App& App, Window& Window, MouseRlsEvent& e) override;
+	virtual bool onMouseMove_impl(MouseMoveEvent& e) override;
+	virtual bool onMousePrs_impl(MousePrsEvent& e) override;
+	virtual bool onMouseRls_impl(MouseRlsEvent& e) override;
 
-	std::function<bool(App& App, Window& Window)> mouseMoveCallback = nullptr;
-	std::function<bool(App& App, Window& Window)> mouseClkCallback = nullptr;
-	std::function<bool(App& App, Window& Window)> mouseRlsCallback = nullptr;
+	std::function<bool(Button&)> mouseMoveCallback = nullptr;
+	std::function<bool(Button&)> mousePrsCallback = nullptr;
+	std::function<bool(Button&)> mouseRlsCallback = nullptr;
 };
 
 /* Label ****************************************************/

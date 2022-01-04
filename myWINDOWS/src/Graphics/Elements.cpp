@@ -4,6 +4,7 @@
 
 Button::Button(const wchar_t * cstr, Pos pos, bool isFrame) :Elements(ElementsType::Button)
 {
+	
 	// set values
 	str = cstr;
 	Elements::getCanvas() = Canvas(pos, { int(str.length() + 16),5 }, isFrame, L'/');
@@ -22,7 +23,7 @@ void Button::flush_impl(wchar_t flushChar)
 	Elements::getCanvas().canvasCenterLine(str);
 }
 
-bool Button::onMouseMove_impl(App& app, Window& window, MouseMoveEvent & e)
+bool Button::onMouseMove_impl(MouseMoveEvent & e)
 {
 	Pos& pos = canvas.getPos();
 	Size& size = canvas.getSize();
@@ -34,7 +35,7 @@ bool Button::onMouseMove_impl(App& app, Window& window, MouseMoveEvent & e)
 			originStr = str, isHover = true, isNeedUpdate = true;
 
 		if (mouseMoveCallback)
-			mouseMoveCallback(app, window);
+			mouseMoveCallback(*this);
 	}
 	else if (isHover)
 		setString(originStr.c_str()), isHover = false, isNeedUpdate = true;
@@ -42,35 +43,35 @@ bool Button::onMouseMove_impl(App& app, Window& window, MouseMoveEvent & e)
 	return isNeedUpdate;
 }
 
-bool Button::onMouseClk_impl(App& app, Window& window, MousePrsEvent & e)
+bool Button::onMousePrs_impl(MousePrsEvent & e)
 {
 	Pos& pos = canvas.getPos();
 	Size& size = canvas.getSize();
 
 	if (e.getMouseX() >= pos.x&&e.getMouseX() <= pos.x + size.width&&e.getMouseY() >= pos.y&&e.getMouseY() <= pos.y + size.height &&
-		!isClk)
+		!isPrs)
 	{
-		flush(L'+'), isClk = true;
+		flush(L'+'), isPrs = true;
 
-		if (mouseClkCallback)
-			mouseClkCallback(app, window);
+		if (mousePrsCallback)
+			mousePrsCallback(*this);
 		return true;
 	}
 	return false;
 }
 
-bool Button::onMouseRls_impl(App& app, Window& window, MouseRlsEvent & e)
+bool Button::onMouseRls_impl(MouseRlsEvent & e)
 {
 	Pos& pos = canvas.getPos();
 	Size& size = canvas.getSize();
 
 	if (e.getMouseX() >= pos.x&&e.getMouseX() <= pos.x + size.width&&e.getMouseY() >= pos.y&&e.getMouseY() <= pos.y + size.height&&
-		isClk)
+		isPrs)
 	{
-		flush(), isClk = false;
+		flush(), isPrs = false;
 
 		if (mouseRlsCallback)
-			mouseRlsCallback(app, window);
+			mouseRlsCallback(*this);
 		return true;
 	}
 	return false;

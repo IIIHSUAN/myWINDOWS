@@ -23,6 +23,8 @@ public:
 
 	unsigned int isMsg = 0;
 
+	void shutdown();
+
 	static AppHandler& get() { return *appHandler; }
 private:
 	static AppHandler* appHandler;
@@ -33,7 +35,7 @@ private:
 	Canvas msgCanvas = Canvas({ MY_WINDOW_WIDTH / 2 - 20, MY_WINDOW_HEIGHT / 2 - 4 }, { 40,8 }, false, L'\u25A2');
 	bool isMsgRun = false;
 
-	float pollingPeriod = 1.0f;  //sec
+	float pollingPeriod = 0.4f;  //sec
 	void pollingUpdate();
 	std::vector<App*> appVec;
 	void update(bool isFlush = true);
@@ -41,5 +43,5 @@ private:
 
 	std::function<void(Event&)> eventCallback;  // carry different events out
 	void onEvent(Event& e);
-	bool keyEvent(WORD key, DWORD ctrl, bool isPressed);
+	bool keyEvent(WORD key, DWORD ctrl, bool isPrs);
 };

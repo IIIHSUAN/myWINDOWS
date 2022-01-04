@@ -1,6 +1,6 @@
 ﻿#include "Window.h"
 
-Window::Window(App & _app, int _id, std::wstring & _name, Pos & _pos, Size & _size) :app(_app), id(_id), name(_name), pos(_pos), size(_size)
+Window::Window(int _id, std::wstring & _name, Pos & _pos, Size & _size) : id(_id), name(_name), pos(_pos), size(_size)
 {
 	size.width = min(size.width, MY_WINDOW_WIDTH), size.height = min(size.height, MY_WINDOW_HEIGHT);
 	pos.y = max(min(pos.y, MY_WINDOW_HEIGHT - 2), 0);
@@ -12,20 +12,20 @@ Window::Window(App & _app, int _id, std::wstring & _name, Pos & _pos, Size & _si
 
 bool Window::onEvent(Event & e)
 {
-	bool opcode = false;
+	bool opcode = false;  // isHandled
 	switch (e.getType())
 	{
 	case EventType::mouseMove:
 		FUNC(opcode, windowMouseMove, app, *this, mouseMoveCallback, MouseMoveEvent, e);
 		break;
 	case EventType::mousePrs:
-		FUNC(opcode, windowMouseClk, app, *this, mouseClkCallback, MousePrsEvent, e);
+		FUNC(opcode, windowMousePrs, app, *this, mousePrsCallback, MousePrsEvent, e);
 		break;
 	case EventType::mouseRls:
 		FUNC(opcode, windowMouseRls, app, *this, mouseRlsCallback, MouseRlsEvent, e);
 		break;
 	case EventType::keyPrs:
-		FUNC(opcode, windowKeyPressed, app, *this, keyPressedCallback, KeyPrsEvent, e);
+		FUNC(opcode, windowKeyPrs, app, *this, keyPrsCallback, KeyPrsEvent, e);
 		break;
 	}
 	return opcode;
@@ -36,14 +36,14 @@ bool Window::windowRecieve(std::string str)
 	return false;
 }
 
-bool Window::windowMouseMove(MouseMoveEvent & e)
+bool Window::windowMouseMove(MouseMoveEvent e)
 {
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
-	if (e.getMouseX() < -2 || e.getMouseX() > size.width || e.getMouseY() < -2 || e.getMouseY() > size.height)
+	if (e.getMouseX() < -1 || e.getMouseX() > size.width || e.getMouseY() < -1 || e.getMouseY() > size.height)
 		return false;
 
 	// move window
-	if (e.getIsPressed() && 
+	if (e.getIsPrs() &&
 		((e.getMouseY() == e.getOffsetY() && e.getMouseX() > 0 && e.getMouseX() < size.width) ||  // top frame
 		(e.getMouseX() == e.getOffsetX()) && e.getMouseY() > 0 && e.getMouseY() < size.height))  // left frame
 	{
@@ -52,58 +52,81 @@ bool Window::windowMouseMove(MouseMoveEvent & e)
 	}
 
 	// Elements
-	bool isNeedUpdate = false;
+	bool opcode = false;
 	for (auto& ele : elementsVec)
-		isNeedUpdate |= ele->onMouseMove(app, *this, e);
-	if (isNeedUpdate)
-		update();
+	{
+		if (ele->onMouseMove(e))
+		{
+			opcode = true;
+			if (ele->getVisible())
+				canvas.renderWithRel(ele->getCanvas());
+		}
+	}
 
-	return false;
+	if (opcode)
+		isNeedUpdate = true;
+	return true;
 }
 
-bool Window::windowMouseClk(MousePrsEvent & e)
+bool Window::windowMousePrs(MousePrsEvent e)
 {
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 	if (e.getMouseX() < 0 || e.getMouseX() > size.width || e.getMouseY() < 0 || e.getMouseY() > size.height)
 		return false;
 
 	// click close
-	static int rawPos; rawPos = index(e.getMouseY(), e.getMouseX());
-	if (rawPos > size.width - 6 && rawPos < size.width - 2)
-		isRun = false;
+	if ((e.getMouseY() == 0) && (e.getMouseX() > size.width - 6 && e.getMouseX() < size.width - 2))
+	{
+		isRun = false, isNeedUpdate = true;
+		return true;
+	}
 
 	// Elements
-	bool isNeedUpdate = false;
+	bool opcode = false;
 	for (auto& ele : elementsVec)
-		isNeedUpdate |= ele->onMouseClk(app, *this, e);
-	if (isNeedUpdate)
-		update();
+	{
+		if (ele->onMousePrs(e))
+		{
+			opcode = true;
+			if (ele->getVisible())
+				canvas.renderWithRel(ele->getCanvas());
+		}
+	}
 
-	return false;
+	if (opcode)
+		isNeedUpdate = true;
+	return true;
 }
 
-bool Window::windowMouseRls(MouseRlsEvent & e)
+bool Window::windowMouseRls(MouseRlsEvent e)
 {
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 	if (e.getMouseX() < 0 || e.getMouseX() > size.width || e.getMouseY() < 0 || e.getMouseY() > size.height)
 		return false;
 
 	// Elements
-	bool isNeedUpdate = false;
+	bool opcode = false;
 	for (auto& ele : elementsVec)
-		isNeedUpdate |= ele->onMouseRls(app, *this, e);
-	if (isNeedUpdate)
-		update();
+	{
+		if (ele->onMouseRls(e))
+		{
+			opcode = true;
+			if (ele->getVisible())
+				canvas.renderWithRel(ele->getCanvas());
+		}
+	}
 
-	return false;
+	if (opcode)
+		isNeedUpdate = true;
+	return true;
 }
 
-bool Window::windowKeyPressed(KeyPrsEvent & e)
+bool Window::windowKeyPrs(KeyPrsEvent e)
 {
 	return false;
 }
 
-void Window::update()
+void Window::elementsUpdate()
 {
 	for(auto&ele:elementsVec)
 		if(ele->getVisible())

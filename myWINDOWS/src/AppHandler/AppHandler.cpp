@@ -21,7 +21,7 @@ AppHandler::AppHandler()
 	canvas.flush(L'⣿');
 	for (int i = 0; i < photo.getRowCount(); i++)
 		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
-	canvas.getCanvas().replace(1572, 18, L"  Welcome Back!  ");
+	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
 	update(0);
 	Sleep(1000);
 }
@@ -72,6 +72,21 @@ void AppHandler::createApp(AppCollection name)
 	t.detach();
 }
 
+void AppHandler::shutdown()
+{
+	isRun = false;
+
+	// use canvas draw
+	auto& photo = img;
+	canvas.flush(L'⣿');
+	for (int i = 0; i < photo.getRowCount(); i++)
+		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Bye!  "));
+	update(0);
+
+	//Sleep(2000);
+}
+
 void AppHandler::pollingUpdate()
 {
 	bool isNeedUpdate;
@@ -85,7 +100,7 @@ void AppHandler::pollingUpdate()
 		if (isNeedUpdate)
 			update();
 
-		Sleep(1000*pollingPeriod);
+		Sleep(1000 * pollingPeriod);
 	}
 }
 
@@ -117,7 +132,7 @@ void AppHandler::update(bool isFlush)
 	}
 	
 	// mouseUI
-	canvas.getCanvas().at(index(mouse.Y, mouse.X)) = (mouse.isPressed ? L'\u29C8' : L'\u25A2');
+	canvas.getCanvas().at(index(mouse.Y, mouse.X)) = (mouse.isPrs ? L'\u29C8' : L'\u25A2');
 
 	// draw
 	Output::get().display(canvas.getConstCanvas()); 
@@ -142,11 +157,14 @@ void AppHandler::onEvent(Event & e)  // from input
 			else
 				app++;
 		}
+
+	if (appVec.empty())
+		shutdown();
 }
 
-bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPressed)
+bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 {
-	if (!isPressed)
+	if (!isPrs)
 		return false;
 
 	EventType e = EventType::unknown;
@@ -163,7 +181,7 @@ bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPressed)
 	switch (key)
 	{
 	case VK_ESCAPE:
-		isRun = false;
+		shutdown();
 		break;
 	case 0x57:
 	case VK_UP:
@@ -190,8 +208,8 @@ bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPressed)
 		mouse.X = min(mouse.X + mouse.offsetX, MY_WINDOW_WIDTH - 1);
 		break;
 	case 0x20:
-		mouse.isPressed = !mouse.isPressed;
-		e = mouse.isPressed ? EventType::mousePrs : EventType::mouseRls;
+		mouse.isPrs = !mouse.isPrs;
+		e = mouse.isPrs ? EventType::mousePrs : EventType::mouseRls;
 		break;
 	}
 
@@ -199,7 +217,7 @@ bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPressed)
 	{
 	case EventType::mouseMove:
 	{
-		MouseMoveEvent event(mouse.X, mouse.Y, mouse.offsetX, mouse.offsetY, mouse.isPressed);
+		MouseMoveEvent event(mouse.X, mouse.Y, mouse.offsetX, mouse.offsetY, mouse.isPrs);
 
 		// out of bound
 		if ((event.getMouseX() == 0 && event.getOffsetX() < -1) || (event.getMouseX() == MY_WINDOW_WIDTH && event.getOffsetX() > 0))
