@@ -2,7 +2,7 @@
 #include <thread>
 #include "Server.h"
 
-int main()
+int refmainmain()
 {
 	Server server;
 

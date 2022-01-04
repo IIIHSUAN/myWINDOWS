@@ -8,7 +8,7 @@ void r(std::string data)
 	std::cout << "AAAAAAAA " << data.c_str();
 }
 
-int main()
+int refmain()
 {
 	Client client;
 
