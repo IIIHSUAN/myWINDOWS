@@ -34,9 +34,11 @@ public:
 	void setBackground(CharImage& source);
 	inline void setPos(Pos& _pos) { pos = _pos; }
 	inline void setSize(Size& _size) { size = _size; }  // resize
+	inline void setIsFrame(bool b) { isFrame = b; }
 
 	inline Pos& getPos() { return pos; }
 	inline Size& getSize() { return size; }
+	inline bool& getIsFrame() { return isFrame; }
 	inline std::wstring& getCanvas() { return canvas; }
 	inline const wchar_t* getConstCanvas() { return canvas.c_str(); }
 private:

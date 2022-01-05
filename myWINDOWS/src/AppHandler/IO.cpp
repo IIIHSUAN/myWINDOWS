@@ -63,8 +63,9 @@ void Output::display(const wchar_t* pixels)
 	}
 }
 
-void Output::setFontSize(int size)
+void Output::setFontSize(int _size)
 {
+	size = _size;
 	cfi.dwFontSize.Y = size;
 	SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 }

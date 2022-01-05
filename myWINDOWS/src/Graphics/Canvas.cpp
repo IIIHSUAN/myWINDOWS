@@ -16,10 +16,10 @@ Canvas::Canvas(Pos pos, Size size, bool isFrame, wchar_t flushChar)
 
 void Canvas::flush(wchar_t newChar)
 {
-	std::wstring flushStr(size.width - isFrame*2, newChar ? newChar : flushChar);
+	std::wstring flushStr(size.width - isFrame * 2, newChar ? newChar : flushChar);
 	for (int i = isFrame; i < size.height - isFrame; i++)
 		canvas.replace(
-			index(i, isFrame), size.width - isFrame*2,
+			index(i, isFrame), size.width - isFrame * 2,
 			flushStr
 		);
 }
@@ -31,7 +31,7 @@ void Canvas::line(int X, int Y, const wchar_t * str, const int len)  // draw in 
 
 	static int x, w;
 	x = X < 0 ? 0 : X;
-	w = X + len > MY_WINDOW_WIDTH ? MY_WINDOW_WIDTH - X : len;
+	w = X + len > MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : len;
 	canvas.replace(index(Y, x), w, str, 0, w);
 }
 
@@ -47,7 +47,7 @@ void Canvas::renderWithRel(Canvas & front)
 	x = front.pos.x, y = front.pos.y, w = min(front.size.width, size.width - x-1), h = min(front.size.height, size.height - y-1);
 	static int mx, my; mx = min(0, x), my = min(0, y);
 
-	for (int i = -my + isNFrame; i < h && w>0; i++)
+	for (int i = -my; i < h && w>0; i++)
 		canvas.replace(index(i + y, x) - mx+ isNFrame, w + mx- isNFrame, front.getCanvas(), i*MY_WINDOW_WIDTH - mx, w + mx - isNFrame);
 }
 

@@ -38,11 +38,13 @@ class Output
 public:
 	Output();
 	void display(const wchar_t* pixels);
-	void setFontSize(int size);
+	void setFontSize(int _size);
+	inline int getFontSize() { return size; }
 
 	static inline Output& get() { return *output; }
 private:
 	static Output* output;
+	int size;
 
 	DWORD num;
 	CONSOLE_FONT_INFOEX cfi;

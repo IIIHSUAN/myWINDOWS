@@ -4,6 +4,7 @@
 #include "AppHandler.h"
 
 #include "../App/Collection/Desktop.h"
+#include "../App/Collection/Settings.h"
 #include "../App/Collection/Painter.h"
 
 
@@ -29,7 +30,6 @@ AppHandler::AppHandler()
 void AppHandler::run()
 {
 	createApp(AppCollection::Desktop);
-	//createApp(AppCollection::Painter);
 
 	std::thread pollingThread(&AppHandler::pollingUpdate, this);
 	std::thread inputThread([]() {	Input::get().run(); });
@@ -54,8 +54,8 @@ void AppHandler::createApp(AppCollection name)
 	case AppCollection::WindowManager:
 		appVec.emplace_back(new Desktop());
 		break;
-	case AppCollection::Setting:
-		appVec.emplace_back(new Desktop());
+	case AppCollection::Settings:
+		appVec.emplace_back(new Settings());
 		break;
 	case AppCollection::Painter:
 		appVec.emplace_back(new Painter());
@@ -183,35 +183,36 @@ bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 	case VK_ESCAPE:
 		shutdown();
 		break;
-	case 0x57:
 	case VK_UP:
 		e = EventType::mouseMove;
 		mouse.offsetY = -mouse.speed;
 		mouse.Y = max(mouse.Y + mouse.offsetY, 0);
 		break;
-	case 0x53:
 	case VK_DOWN:
 		e = EventType::mouseMove;
 		mouse.offsetY = mouse.speed;
 		mouse.Y = min(mouse.Y + mouse.offsetY, MY_WINDOW_HEIGHT - 1);
 		break;
-	case 0x41:
 	case VK_LEFT:
 		e = EventType::mouseMove;
 		mouse.offsetX = -mouse.speed;
 		mouse.X = max(mouse.X + mouse.offsetX, 0);
 		break;
-	case 0x44:
 	case VK_RIGHT:
 		e = EventType::mouseMove;
 		mouse.offsetX = mouse.speed;
 		mouse.X = min(mouse.X + mouse.offsetX, MY_WINDOW_WIDTH - 1);
 		break;
-	case 0x20:
+	case 0x20:  // VK_SPACE
 		mouse.isPrs = !mouse.isPrs;
 		e = mouse.isPrs ? EventType::mousePrs : EventType::mouseRls;
 		break;
+	default:
+		e = EventType::keyPrs;
+		break;
 	}
+
+	
 
 	switch (e)
 	{

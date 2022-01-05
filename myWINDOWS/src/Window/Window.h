@@ -39,7 +39,7 @@ public:
 	inline void setMousePrsCallback(std::function<bool(MousePrsEvent&)> func) { mousePrsCallback = func; };
 	inline void setKeyPrsCallback(std::function<bool(KeyPrsEvent&)> func) { keyPrsCallback = func; };
 
-	inline bool pollingUpdate() { bool b = isNeedUpdate; isNeedUpdate = false; return b; }
+	bool pollingUpdate();
 
 protected:
 	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) { ele_ptr->setId(elementsIdNum++), elementsVec.emplace_back(ele_ptr), elementsUpdate(); }

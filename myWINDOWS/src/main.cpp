@@ -2,7 +2,9 @@
 
 int main(int argc, char** args)
 {
-	// entry point;
+	Output::get().setFontSize(20);
+
+	// entry point
 	auto& appHandler = AppHandler::get();
 	appHandler.run();
 

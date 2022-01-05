@@ -55,17 +55,13 @@ bool Window::windowMouseMove(MouseMoveEvent e)
 	bool opcode = false;
 	for (auto& ele : elementsVec)
 	{
-		if (ele->onMouseMove(e))
-		{
-			opcode = true;
-			if (ele->getVisible())
-				canvas.renderWithRel(ele->getCanvas());
-		}
+		MouseMoveEvent ee = e;
+		opcode |= ele->onMouseMove(ee);
+		if (ele->pendingUpdate() && ele->getVisible())
+			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
 	}
 
-	if (opcode)
-		isNeedUpdate = true;
-	return true;
+	return opcode;
 }
 
 bool Window::windowMousePrs(MousePrsEvent e)
@@ -85,17 +81,13 @@ bool Window::windowMousePrs(MousePrsEvent e)
 	bool opcode = false;
 	for (auto& ele : elementsVec)
 	{
-		if (ele->onMousePrs(e))
-		{
-			opcode = true;
-			if (ele->getVisible())
-				canvas.renderWithRel(ele->getCanvas());
-		}
+		MousePrsEvent ee = e;
+		opcode |= ele->onMousePrs(ee);
+		if (ele->pendingUpdate() && ele->getVisible())
+			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
 	}
 
-	if (opcode)
-		isNeedUpdate = true;
-	return true;
+	return opcode;
 }
 
 bool Window::windowMouseRls(MouseRlsEvent e)
@@ -108,29 +100,43 @@ bool Window::windowMouseRls(MouseRlsEvent e)
 	bool opcode = false;
 	for (auto& ele : elementsVec)
 	{
-		if (ele->onMouseRls(e))
-		{
-			opcode = true;
-			if (ele->getVisible())
-				canvas.renderWithRel(ele->getCanvas());
-		}
+		MouseRlsEvent ee = e;
+		opcode |= ele->onMouseRls(ee);
+		if (ele->pendingUpdate() && ele->getVisible())
+			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
 	}
 
-	if (opcode)
-		isNeedUpdate = true;
-	return true;
+	return opcode;
 }
 
 bool Window::windowKeyPrs(KeyPrsEvent e)
 {
-	return false;
+	// Elements
+	bool opcode = false;
+	for (auto& ele : elementsVec)
+	{
+		KeyPrsEvent ee = e;
+		opcode |= ele->onKeyPrs(ee);
+		if (ele->pendingUpdate() && ele->getVisible())
+			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
+	}
+
+	return opcode;
 }
 
+bool Window::pollingUpdate()
+{
+	elementsUpdate();
+	bool b = isNeedUpdate; isNeedUpdate = false; return b;
+}
 void Window::elementsUpdate()
 {
-	for(auto&ele:elementsVec)
-		if(ele->getVisible())
-			canvas.renderWithRel(ele->getCanvas());
-
-	isNeedUpdate = true;
+	bool opcode = false;
+	for (auto&ele : elementsVec)
+	{
+		if (ele->pendingUpdate() && ele->getVisible())
+			canvas.renderWithRel(ele->getCanvas()), opcode |= true;		
+	}
+	
+	isNeedUpdate |= opcode;
 }

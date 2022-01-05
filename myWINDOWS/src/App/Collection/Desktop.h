@@ -10,11 +10,9 @@ class Desktop;
 class DesktopWindow :public Window
 {
 public:
-	DesktopWindow(Desktop& app, int _id, std::wstring _name, Pos _pos, Size _size);
+	DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size);
 private:
-	Desktop& app;
-
-	std::shared_ptr<Button>bPainter, bChess;
+	std::shared_ptr<Button>bSettings, bPainter;
 
 	const wchar_t* backgroundData = L"\
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
@@ -36,7 +34,7 @@ class Desktop :public App
 {
 public:
 	Desktop() : App(AppCollection::Desktop, windowVec) {
-		CREATE_WINDOW(windowVec, DesktopWindow(*this, 0, L"Desktop", { 2,1 }, { MY_WINDOW_WIDTH - 5, MY_WINDOW_HEIGHT - 10 }));
+		CREATE_WINDOW(windowVec, DesktopWindow(0, L"Desktop", { 2,1 }, { MY_WINDOW_WIDTH - 5, MY_WINDOW_HEIGHT - 10 }));
 	}
 	virtual void run() override;
 private:
