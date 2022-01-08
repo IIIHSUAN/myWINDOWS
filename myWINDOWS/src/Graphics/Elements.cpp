@@ -6,9 +6,9 @@
 void Elements::flush_impl(wchar_t flushChar)
 {
 	if (flushChar)
-		Elements::getCanvas().flush(flushChar);
+		canvas.flush(flushChar);
 	else
-		Elements::getCanvas().flush();
+		canvas.flush();
 }
 
 bool Elements::_onMouseMove(MouseMoveEvent & e)
@@ -70,7 +70,7 @@ bool Elements::_onMouseRls(MouseRlsEvent & e)
 Button::Button(const wchar_t * cstr, Pos pos, bool isFrame) :str(cstr), Elements(ElementsType::Button)
 {
 	// set values
-	Elements::getCanvas() = Canvas(pos, { int(str.length() + 16),5 }, isFrame, L'/');
+	canvas = Canvas(pos, { int(str.length() + 16),5 }, isFrame, L'/');
 
 	// update canvas
 	Elements::flush();
@@ -79,11 +79,11 @@ Button::Button(const wchar_t * cstr, Pos pos, bool isFrame) :str(cstr), Elements
 void Button::flush_impl(wchar_t flushChar)
 {
 	if (flushChar)
-		Elements::getCanvas().flush(flushChar);
+		canvas.flush(flushChar);
 	else
-		Elements::getCanvas().flush();
+		canvas.flush();
 
-	Elements::getCanvas().canvasCenterLine(str);
+	canvas.canvasCenterLine(str);
 }
 
 bool Button::onMouseMove_impl(MouseMoveEvent & e)
@@ -123,7 +123,7 @@ bool Button::onMouseRls_impl(MouseRlsEvent & e)
 Inputbox::Inputbox(const wchar_t * cstr, Pos pos, int len, bool isFrame) :str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox)
 {
 	// set values
-	Elements::getCanvas() = Canvas(pos, { len + 2,3 }, isFrame, L' ');
+	canvas = Canvas(pos, { len + 2,3 }, isFrame, L' ');
 
 	// update canvas
 	Elements::flush();
@@ -132,12 +132,12 @@ Inputbox::Inputbox(const wchar_t * cstr, Pos pos, int len, bool isFrame) :str(cs
 void Inputbox::flush_impl(wchar_t flushChar)
 {
 	if (flushChar)
-		Elements::getCanvas().flush(flushChar);
+		canvas.flush(flushChar);
 	else
-		Elements::getCanvas().flush(L' ');
+		canvas.flush(L' ');
 
 	std::wstring cstr = L"  " + str;
-	Elements::getCanvas().line(1, 1, cstr.c_str(), cstr.length());
+	canvas.line(1, 1, cstr.c_str(), cstr.length());
 }
 
 bool Inputbox::onMouseMove_impl(MouseMoveEvent & e)
@@ -147,9 +147,9 @@ bool Inputbox::onMouseMove_impl(MouseMoveEvent & e)
 		isFlash = true;
 
 		std::thread t([this]() {
-			int isOn = 0;
+			bool isOn = false;
 			while (info.mouseHover == InfoType::Active && isFlash)
-				isOn = (++isOn) % 3, Elements::flush(isOn ? (isOn == 1 ? L'.' : L':') : L' '), isNeedUpdate = true, Sleep(500);
+				isOn = !isOn, isOn ? canvas.flush(L'¢i') : Elements::flush(), isNeedUpdate = true, Sleep(500);
 
  			Elements::flush();
 			isFlash = false;
@@ -182,6 +182,8 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 	bool opcode = false;
 	if (isFocus)
 	{
+		isFlash = false;
+
 		if(e.getKey() == VK_RETURN)
 			originStr = str;
 		else if (e.getKey() == VK_BACK)
@@ -195,4 +197,23 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 	}
 	
 	return opcode;
+}
+
+/* Panel ****************************************************/
+
+Panel::Panel(Pos pos, Size size, bool isFrame, CharImage * charImage) :Elements(ElementsType::Panel), charImage(charImage)
+{
+	// set values
+	canvas = Canvas(pos, size, isFrame, L'+');
+
+	// update canvas
+	Elements::flush();
+}
+
+void Panel::flush_impl(wchar_t flushChar)
+{
+	canvas.flush();
+
+	if (charImage)
+		canvas.setBackground(*charImage);
 }

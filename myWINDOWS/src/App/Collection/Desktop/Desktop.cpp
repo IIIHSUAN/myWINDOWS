@@ -22,11 +22,24 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 		if (b.getInfo().mouseHover == InfoType::Active)
 			b.setString(L"Open Painter ?", L'|');
 		else
-			b.setString(L"  Painter  ");
+			b.setString(L"  Painter   ");
 		return false;
 	});
 	bPainter->onclick([](Button& b) {
 		AppHandler::get().createApp(AppCollection::Painter);
+		return true;
+	});
+
+	PUSH_ELEMENTS(bChess, Button(L"   Chess    ", { 73, 14 }, true));
+	bChess->onhover([](Button& b) {
+		if (b.getInfo().mouseHover == InfoType::Active)
+			b.setString(L"Play ?", L'|');
+		else
+			b.setString(L"   Chess    ");
+		return false;
+	});
+	bChess->onclick([](Button& b) {
+		AppHandler::get().createApp(AppCollection::Chess);
 		return true;
 	});
 }

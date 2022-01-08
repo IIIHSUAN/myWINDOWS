@@ -4,12 +4,14 @@
 
 class Mouse {
 public:
-	int X = 0, Y = 5, offsetX, offsetY;
+	int X = 20, Y = 5, offsetX, offsetY;
 	bool isPrs = false;
 
 	enum Speed { normal = 1, fast = 2, vfast = 4 };
 	Speed speed = normal;
 	void changeSpeed() { speed = speed == normal ? fast : (speed == fast ? vfast : normal); }
+
+	enum Mode { cursor, flashing, block, flashingBlock };
 
 	static inline Mouse& get() { return *mouse; }
 private:
@@ -44,7 +46,7 @@ public:
 	static inline Output& get() { return *output; }
 private:
 	static Output* output;
-	int size;
+	int size = 30;
 
 	DWORD num;
 	CONSOLE_FONT_INFOEX cfi;

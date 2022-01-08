@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "../App.h"
+#include "App/App.h"
 
 class Painter;
 
@@ -14,10 +14,10 @@ public:
 class Painter :public App
 {
 public:
-	Painter() : App(AppCollection::Painter, windowVec) {
-		CREATE_WINDOW(windowVec, PainterWindow(0, L"Painter", { 2,1 }, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 10 }));
+	Painter(Pos pos = { 2,1 }) : App(AppCollection::Painter, windowVec) {
+		CREATE_WINDOW(windowVec, PainterWindow(0, L"Painter", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 10 }));
 
-		windowVec[0]->setMouseMoveCallback([this](MouseMoveEvent e) {
+		windowVec[0]->setMouseMoveCallback([this](MouseMoveEvent& e) {
 			auto& window = windowVec[0];
 			e.setPos({ e.getMouseX() - window->getX() , e.getMouseY() - window->getY() });
 

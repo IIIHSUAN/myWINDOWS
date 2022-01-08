@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "../App.h"
-#include "Painter.h"
+#include "App/App.h"
+#include "../Painter/Painter.h"
 
 #include <ctime>
 
@@ -12,9 +12,12 @@ class DesktopWindow :public Window
 public:
 	DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size);
 private:
-	std::shared_ptr<Button>bSettings, bPainter;
+	std::shared_ptr<Button>bSettings, bPainter, bChess;
 
 	const wchar_t* backgroundData = L"\
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
 ░░░░░░░░▌▒█░░░░░░░░░░░▄▀▒▌░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
@@ -27,14 +30,14 @@ private:
 ░▐░░░▒▒▒▒▒▒▒▒▌██▀▒▒░░░▒▒▒▀▄▌░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
 ░▌░▒▄██▄▒▒▒▒▒▒▒▒▒░░░░░░▒▒▒▒▌░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\
 ▀▒▀▐▄█▄█▌▄░▀▒▒░░░░░░░░░░▒▒▒▌░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░";
-	CharImage background = { backgroundData ,{6,3}, {66,12} };
+	CharImage background = { backgroundData ,{6,4}, {66,15} };
 };
 
 class Desktop :public App
 {
 public:
-	Desktop() : App(AppCollection::Desktop, windowVec) {
-		CREATE_WINDOW(windowVec, DesktopWindow(0, L"Desktop", { 2,1 }, { MY_WINDOW_WIDTH - 5, MY_WINDOW_HEIGHT - 10 }));
+	Desktop(Pos pos = { 3,1 }) : App(AppCollection::Desktop, windowVec) {
+		CREATE_WINDOW(windowVec, DesktopWindow(0, L"Desktop", pos, { MY_WINDOW_WIDTH - 5, MY_WINDOW_HEIGHT - 5 }));
 	}
 	virtual void run() override;
 private:

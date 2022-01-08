@@ -35,6 +35,28 @@ void Canvas::line(int X, int Y, const wchar_t * str, const int len)  // draw in 
 	canvas.replace(index(Y, x), w, str, 0, w);
 }
 
+void Canvas::line(int X, int Y, const int showLen, const wchar_t * str, const int len)  // draw in one line
+{
+	if (Y > MY_WINDOW_HEIGHT || Y < 0)
+		return;
+
+	static int x, w;
+	x = X < 0 ? 0 : X;
+	w = X + len > MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : len;
+	canvas.replace(index(Y, x), showLen, str, 0, w);
+}
+
+void Canvas::line(int X, int Y, std::wstring s)  // draw in one line
+{
+	if (Y > MY_WINDOW_HEIGHT || Y < 0)
+		return;
+
+	static int x, w;
+	x = X < 0 ? 0 : X;
+	w = X + s.length() > MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : s.length();
+	canvas.replace(index(Y, x), w, s, 0, w);
+}
+
 void Canvas::lineCenter(int X, int Y, std::wstring& str)
 {
 	line(X - str.length() / 2, Y, str.c_str(), str.length());
@@ -42,13 +64,13 @@ void Canvas::lineCenter(int X, int Y, std::wstring& str)
 
 void Canvas::renderWithRel(Canvas & front)
 {
-	bool isNFrame = !front.isFrame;
-	static int x, y, w, h;
-	x = front.pos.x, y = front.pos.y, w = min(front.size.width, size.width - x-1), h = min(front.size.height, size.height - y-1);
-	static int mx, my; mx = min(0, x), my = min(0, y);
+	static int x, y, w, h, mx, my;
+	x = front.pos.x, y = front.pos.y;
+	w = min(front.size.width, size.width - x - 1), h = min(front.size.height, size.height - y - 1);
+	mx = min(0, x), my = min(0, y);  // if in negative plane
 
 	for (int i = -my; i < h && w>0; i++)
-		canvas.replace(index(i + y, x) - mx+ isNFrame, w + mx- isNFrame, front.getCanvas(), i*MY_WINDOW_WIDTH - mx, w + mx - isNFrame);
+		canvas.replace(index(i + y, x) - mx, w + mx, front.getCanvas(), i*MY_WINDOW_WIDTH - mx, w + mx);
 }
 
 void Canvas::renderWindow(Window& window)  // with custom size

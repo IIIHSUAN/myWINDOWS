@@ -11,12 +11,16 @@ struct Pos
 {
 	int x, y;
 
+	inline bool operator!=(const int& i) { return !(x == i && y == i); }
+	inline bool operator!=(Pos& pos) { return !(x == pos.x&&y == pos.y); }
 	inline bool operator==(Pos&& pos) { return x == pos.x&&y == pos.y; }
 	inline bool operator==(Pos& pos) { return x == pos.x&&y == pos.y; }
 	inline bool operator==(const int& i) { return x == i&&y == i; }
 	inline Pos operator++(int) { x += 1, y += 1; return Pos({ x - 1, y - 1 }); }
 	inline Pos operator--(int) { x -= 1, y -= 1; return Pos({ x + 1, y + 1 }); }
 	inline void operator()(int _x, int _y) { x = _x, y = _y; }
+	inline Pos operator+=(Pos& pos) { x += pos.x, y += pos.y; }
+	inline Pos operator-=(Pos& pos) { x -= pos.x, y -= pos.y; }
 };
 
 struct Size

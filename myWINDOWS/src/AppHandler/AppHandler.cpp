@@ -3,9 +3,10 @@
 
 #include "AppHandler.h"
 
-#include "../App/Collection/Desktop.h"
-#include "../App/Collection/Settings.h"
-#include "../App/Collection/Painter.h"
+#include "../App/Collection/Desktop/Desktop.h"
+#include "../App/Collection/Settings/Settings.h"
+#include "../App/Collection/Painter/Painter.h"
+#include "../App/Collection/Chess/Chess.h"
 
 
 AppHandler* AppHandler::appHandler = new AppHandler();
@@ -29,7 +30,8 @@ AppHandler::AppHandler()
 
 void AppHandler::run()
 {
-	createApp(AppCollection::Desktop);
+	//createApp(AppCollection::Desktop);
+	createApp(AppCollection::Chess);
 
 	std::thread pollingThread(&AppHandler::pollingUpdate, this);
 	std::thread inputThread([]() {	Input::get().run(); });
@@ -40,31 +42,35 @@ void AppHandler::run()
 
 void AppHandler::createApp(AppCollection name)
 {
+	static Pos windowPos = { 0,0 };
+
+	windowPos++;
+
 	switch (name)
 	{
 	default:
 	case AppCollection::Unknown:
 		return;
 	case AppCollection::Desktop:
-		appVec.emplace_back(new Desktop());
+		appVec.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::Menu:
-		appVec.emplace_back(new Desktop());
+		appVec.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::WindowManager:
-		appVec.emplace_back(new Desktop());
+		appVec.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::Settings:
-		appVec.emplace_back(new Settings());
+		appVec.emplace_back(new Settings(windowPos));
 		break;
 	case AppCollection::Painter:
-		appVec.emplace_back(new Painter());
+		appVec.emplace_back(new Painter(windowPos));
 		break;
 	case AppCollection::MyPhoto:
-		appVec.emplace_back(new Desktop());
+		appVec.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::Chess:
-		appVec.emplace_back(new Desktop());
+		appVec.emplace_back(new Chess(windowPos));
 		break;
 	}
 

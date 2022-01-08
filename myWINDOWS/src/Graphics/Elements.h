@@ -2,6 +2,10 @@
 
 // useful elements under Canvas
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// !!!!  std::function only can use var in same (derived) class, or cannot access    !!!!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 #include <functional>
 
 #include "Window/Event.h"
@@ -24,7 +28,7 @@ struct ElementsInfo
 
 enum class ElementsType
 {
-	None, Button, Inputbox
+	None, Button, Inputbox, Panel
 };
 class Elements
 {
@@ -36,11 +40,11 @@ public:
 
 	template <typename T> inline T& get() {	return dynamic_cast<T&>(*this); }
 
-	inline void flush(wchar_t flushChar = 0) { flush_impl(flushChar), isNeedUpdate = true; }  // set isNeedUpdate already
+	inline void flush(wchar_t flushChar = 0) { flush_impl(flushChar), isNeedUpdate = true; }  // isNeedUpdate = true already
 	inline bool onMouseMove(MouseMoveEvent& e) { return  _onMouseMove(e) ? onMouseMove_impl(e) : false; }  // be sure to set isNeedUpdate
 	inline bool onMousePrs(MousePrsEvent& e) { return _onMousePrs(e) ? onMousePrs_impl(e) : false; }	   // be sure to set isNeedUpdate
 	inline bool onMouseRls(MouseRlsEvent& e) { return _onMouseRls(e) ? onMouseRls_impl(e) : false; }	   // be sure to set isNeedUpdate
-	inline bool onKeyPrs(KeyPrsEvent& e) { return onKeyPrs_impl(e); }	       // be sure to set isNeedUpdate
+	inline bool onKeyPrs(KeyPrsEvent& e) { return onKeyPrs_impl(e); }	                                   // be sure to set isNeedUpdate
 
 	inline void setPos(Pos _pos) { canvas.setPos(_pos); }
 	inline void setVisible(bool b) { info.isVisible = b; }
@@ -118,4 +122,26 @@ private:
 	virtual bool onKeyPrs_impl(KeyPrsEvent& e) override;
 
 	std::function<bool(KeyPrsEvent& e, std::wstring&)> keyPrsCallback = nullptr;
+};
+
+/* Panel ****************************************************/
+
+class Panel :public Elements
+{
+public:
+	Panel(Pos pos, Size size, bool isFrame, CharImage* charImage = 0);
+
+	inline void setBackground(CharImage* _charImage) { charImage = _charImage, Elements::flush(); }
+
+	void onhover(std::function<bool(Panel& p, MouseMoveEvent&)> func) { mouseHoverCallback = func; }
+	void onclick(std::function<bool(Panel& p, MouseRlsEvent&)> func) { mouseClkCallback = func; }
+private:
+	CharImage* charImage;
+
+	virtual void flush_impl(wchar_t flushChar) override;
+	virtual inline bool onMouseMove_impl(MouseMoveEvent& e) override { return mouseHoverCallback ? mouseHoverCallback(*this, e) : false; }
+	virtual inline bool onMouseRls_impl(MouseRlsEvent& e) override { return (mouseClkCallback && info.mouseClick == InfoType::Active) ? mouseClkCallback(*this, e) : false; }
+
+	std::function<bool(Panel&, MouseMoveEvent&)> mouseHoverCallback = nullptr;
+	std::function<bool(Panel&, MouseRlsEvent&)> mouseClkCallback = nullptr;
 };

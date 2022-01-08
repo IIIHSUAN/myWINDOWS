@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "../App.h"
+#include "App/App.h"
 
 class Settings;
 
@@ -20,6 +20,7 @@ public:
 		});
 
 		getCanvas().line(10, 10, L"Hot key: set Sensitivity - ctrl & shift", 39);
+		getCanvas().line(10, 13, L"Hot key: shut down - Esc", 24);
 	}
 
 private:
@@ -29,8 +30,8 @@ private:
 class Settings :public App
 {
 public:
-	Settings() : App(AppCollection::Settings, windowVec) {
-		CREATE_WINDOW(windowVec, SettingsWindow(0, L"Settings", { 2,1 }, { 60, 15 }));
+	Settings(Pos pos = { 2,1 }) : App(AppCollection::Settings, windowVec) {
+		CREATE_WINDOW(windowVec, SettingsWindow(0, L"Settings", pos, { 60, 18 }));
 	}
 
 private:

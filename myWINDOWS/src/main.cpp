@@ -1,8 +1,10 @@
-﻿#include "AppHandler/AppHandler.h"
+﻿#pragma execution_character_set("utf-8")
+
+#include "AppHandler/AppHandler.h"
+
 
 int main(int argc, char** args)
 {
-	Output::get().setFontSize(20);
 
 	// entry point
 	auto& appHandler = AppHandler::get();

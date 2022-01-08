@@ -24,7 +24,9 @@ public:
 	
 	void animate();
 
+	void line(int X, int Y, const int showLen, const wchar_t * str, const int len);
 	void line(int X, int Y, const wchar_t * str, const int len);
+	void line(int X, int Y, std::wstring s);
 	void lineCenter(int X, int Y, std::wstring& str);
 	inline void canvasCenterLine(std::wstring& str) { lineCenter(size.width / 2, size.height / 2, str); }
 
