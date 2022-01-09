@@ -47,7 +47,7 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 void Desktop::run()
 {
 	// time thread
-	while (isAppExist() && !windowVec.empty())
+	while (isRun)
 	{
 		std::time_t now = std::time(0);
 		struct tm t;
@@ -58,7 +58,8 @@ void Desktop::run()
 			(t.tm_min < 10 ? L"0" : L"\0") + std::to_wstring(t.tm_min) + L':' +
 			(t.tm_sec < 10 ? L"0" : L"\0") + std::to_wstring(t.tm_sec) + L"  ";
 
-		windowVec[0]->getCanvas().line(40, 8, str.c_str(), str.length()), isNeedUpdate = true;
+		if(isRun && !windowVec.empty())
+			windowVec[0]->getCanvas().line(40, 8, str.c_str(), str.length()), isNeedUpdate = true;
 
 		Sleep(APPHANDLER_UPDATE_PERIOD);
 	}

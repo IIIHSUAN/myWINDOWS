@@ -26,12 +26,12 @@ public:
 private:
 	inline Pos boardPos(Pos pos, bool isRevert = false) { if (isRevert) { pos.x = 7 - pos.x, pos.y = 7 - pos.y; } return pos; }
 	bool isBaseWhite = true;
-	std::pair<bool, bool> isCastling;
+	bool isCastling[2][2];
 	ChessPiece chessSet[32];
 	int chessIdMap[8][8];
 
-	int selectId = ChessId::None;
-	Pos selectPos, lastPos = { -1,-1 };
+	int selectId, lastMoveId;
+	Pos selectPos;
 	std::vector<Pos> movableVec;
 
 	void refresh();

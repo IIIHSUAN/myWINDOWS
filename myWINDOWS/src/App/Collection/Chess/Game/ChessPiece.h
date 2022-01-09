@@ -8,17 +8,18 @@ class ChessPiece
 {
 public:
 	ChessPiece() {}
-	ChessPiece(ChessType type, ChessColor color, Pos pos) : color(color), pos(pos) { setType(type); }
+	ChessPiece(ChessType type, ChessColor color, Pos pos) : color(color), pos(pos), lastPos(pos) { setType(type); }
 
 	inline const wchar_t* getSymbol() { return symbol; }
 	inline Pos& getPos() { return pos; }
+	inline Pos& getLastPos() { return lastPos; }
 	inline ChessClass& getChess() { return chess; }
 	inline ChessColor& getColor() { return color; }
 	inline const bool& getIsAlive() { return isAlive; }
 
-	std::vector<Pos> getMovableVec(int chessIdMap[8][8], ChessPiece chessSet[32], bool isBaseWhite, std::pair<bool, bool>& isCastling);
+	std::vector<Pos> getMovableVec(int chessIdMap[8][8], ChessPiece chessSet[32], bool isBaseWhite, bool isCastling[2][2], int& lastMoveId);
 
-	inline void setPos(Pos _pos) { pos = _pos; }
+	inline void setPos(Pos _pos) { lastPos = pos; pos = _pos;  }
 	inline void setAlive(bool b) { isAlive = b; }
 	inline void setType(ChessType type) {
 		switch (type)
@@ -51,7 +52,7 @@ public:
 private:
 	ChessClass chess;
 	ChessColor color;
-	Pos pos;
+	Pos pos, lastPos;
 	int id;
 	bool isAlive = true;
 	const wchar_t* symbol;
