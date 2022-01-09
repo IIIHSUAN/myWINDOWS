@@ -26,18 +26,19 @@ public:
 	inline std::vector<std::shared_ptr<Window>>& getWindowVec() { return windowVec; }
 
 	inline AppCollection& getApp() { return app; }
-	inline bool& getIsRun() { return isRun; }
+	inline bool& getIsRun() { return isRun; }  // for telling AppHandler
 
 	bool pollingUpdate();
-	inline void setPollingUpdate(bool b) { isNeedUpdate = b; }
 
 	virtual void run() {}
 
 	inline void pushWindow(std::shared_ptr<Window>& window) { windowVec.emplace_back(window); }
+protected:
+	bool isNeedUpdate = true;
+	inline bool isAppExist() { return this; }  // for derived app
 private:
+	bool isRun = true;
 	AppCollection app;
-	Pos subWindowPos = { 0,0 };
-	bool isRun = true, isNeedUpdate = true;
 	std::vector<std::shared_ptr<Window>>& windowVec;  // ref of the windowVec, only for onEvent & pollingUpdate
 
 	bool onEvent(Event & e);

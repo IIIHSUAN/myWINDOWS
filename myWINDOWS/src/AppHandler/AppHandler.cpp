@@ -63,7 +63,6 @@ void AppHandler::run()
 void AppHandler::createApp(AppCollection name)
 {
 	static Pos windowPos = { 0,0 };
-
 	windowPos++;
 
 	switch (name)
@@ -100,9 +99,10 @@ void AppHandler::createApp(AppCollection name)
 
 void AppHandler::shutdown()
 {
+	isRun = false;
+
 	if (!appVec.empty())
 		onEvent(ShutdownEvent());
-	isRun = false;
 
 	// use canvas draw
 	auto& photo = img3;
@@ -111,7 +111,7 @@ void AppHandler::shutdown()
 		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Bye!  "));
 	update(0);
-	Sleep(2000);
+	//Sleep(2000);
 }
 
 void AppHandler::pollingUpdate()

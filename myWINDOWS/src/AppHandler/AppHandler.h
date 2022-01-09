@@ -3,14 +3,14 @@
 #include <list>
 #include <thread>
 
-#define APPHANDLER_UPDATE_PERIOD AppHandler::get().getPollingPeriod()
-
 #include "AppHandler/IO.h"
 #include "Image/Image.h"
 #include "App/App.h"
 #include "App/AppCollection.h"
 #include "Graphics/Struct.h"
 #include "Graphics/Canvas.h"
+
+#define APPHANDLER_UPDATE_PERIOD AppHandler::get().getPollingPeriod()*1000.0f
 
 class AppHandler
 {
