@@ -117,10 +117,18 @@ int Board::move(Pos pos)
 	else if (selectId == ChessId::bKing)
 		isCastling[1][0] = false, isCastling[1][1] = false;
 	else if (selectId == ChessId::bRook0)
-		isCastling[1][0] = false;
-	else if (selectId == ChessId::bRook1)
 		isCastling[1][1] = false;
-
+	else if (selectId == ChessId::bRook1)
+		isCastling[1][0] = false;
+	// castling
+	if (chessSet[selectId].getChess().getType() == ChessType::King && abs(chessSet[selectId].getPos().x - pos.x) == 2)
+		if (int(pos.x / 3) == 0)  // left
+			chessIdMap[pos.y][pos.x + 1] = chessIdMap[pos.y][0], chessIdMap[pos.y][0] = ChessId::None,
+			chessSet[chessIdMap[pos.y][pos.x + 1]].setPos(Pos({ pos.x + 1,pos.y }));
+		else  // right
+			chessIdMap[pos.y][pos.x - 1] = chessIdMap[pos.y][7], chessIdMap[pos.y][7] = ChessId::None,
+			chessSet[chessIdMap[pos.y][pos.x - 1]].setPos(Pos({ pos.x - 1,pos.y }));
+		
 	// next pos
 	if (chessIdMap[pos.y][pos.x] != ChessId::None)
 	{

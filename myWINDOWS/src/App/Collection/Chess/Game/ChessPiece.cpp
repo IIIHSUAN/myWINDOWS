@@ -44,18 +44,18 @@ std::vector<Pos> ChessPiece::getMovableVec(int chessIdMap[8][8], ChessPiece ches
 		return result;
 	}
 
-	// castling, still not sounds
+	// castling, not check checkmate
 	if (id==ChessId::wKing)
 	{
-		if (isCastling[0][0] && chessIdMap[pos.y][pos.x + 1] == ChessId::None && chessIdMap[pos.y][pos.x + 2] == ChessId::None && chessIdMap[pos.y][pos.x + 3] == ChessId::None)
-			result.emplace_back(Pos({ pos.x + 3,pos.y }));
-		if (isCastling[0][1] && chessIdMap[pos.y][pos.x - 1] == ChessId::None && chessIdMap[pos.y][pos.x - 2] == ChessId::None)
+		if (isCastling[0][0] && chessIdMap[pos.y][pos.x + 1] == ChessId::None && chessIdMap[pos.y][pos.x + 2] == ChessId::None)
+			result.emplace_back(Pos({ pos.x + 2,pos.y }));
+		if (isCastling[0][1] && chessIdMap[pos.y][pos.x - 1] == ChessId::None && chessIdMap[pos.y][pos.x - 2] == ChessId::None && chessIdMap[pos.y][pos.x - 3] == ChessId::None)
 			result.emplace_back(Pos({ pos.x - 2,pos.y }));
 	}
 	else if (id == ChessId::bKing)
 	{
 		if (isCastling[1][0] && chessIdMap[pos.y][pos.x + 1] == ChessId::None && chessIdMap[pos.y][pos.x + 2] == ChessId::None && chessIdMap[pos.y][pos.x + 3] == ChessId::None)
-			result.emplace_back(Pos({ pos.x + 3,pos.y }));
+			result.emplace_back(Pos({ pos.x + 2,pos.y }));
 		if (isCastling[1][1] && chessIdMap[pos.y][pos.x - 1] == ChessId::None && chessIdMap[pos.y][pos.x - 2] == ChessId::None)
 			result.emplace_back(Pos({ pos.x - 2,pos.y }));
 	}

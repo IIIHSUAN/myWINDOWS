@@ -52,6 +52,7 @@ AppHandler::AppHandler()
 void AppHandler::run()
 {
 	createApp(AppCollection::Desktop);
+	createApp(AppCollection::Chess);
 
 	std::thread pollingThread(&AppHandler::pollingUpdate, this);
 	std::thread inputThread([]() {	Input::get().run(); });
