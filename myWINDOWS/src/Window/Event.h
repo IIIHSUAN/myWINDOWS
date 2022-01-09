@@ -11,7 +11,7 @@ typedef unsigned short WORD;
 
 enum class EventType
 {
-	unknown, mouseMove, mousePrs, mouseRls, keyPrs, recieve
+	unknown, mouseMove, mousePrs, mouseRls, keyPrs, recieve, shutdown
 };
 
 class Event
@@ -80,4 +80,10 @@ public:
 	inline WORD& getKey() { return key; }
 private:
 	WORD key;
+};
+
+class ShutdownEvent :public Event
+{
+public:
+	inline ShutdownEvent() : Event(EventType::shutdown) {}
 };

@@ -27,6 +27,9 @@ bool Window::onEvent(Event & e)
 	case EventType::keyPrs:
 		FUNC(opcode, windowKeyPrs, app, *this, keyPrsCallback, KeyPrsEvent, e);
 		break;
+	case EventType::shutdown:
+		isRun = false;
+		break;
 	}
 	return opcode;
 }
@@ -61,7 +64,7 @@ bool Window::windowMouseMove(MouseMoveEvent e)
 			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
 	}
 
-	return opcode;
+	return true;// opcode;
 }
 
 bool Window::windowMousePrs(MousePrsEvent e)
@@ -87,7 +90,7 @@ bool Window::windowMousePrs(MousePrsEvent e)
 			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
 	}
 
-	return opcode;
+	return true;// opcode;
 }
 
 bool Window::windowMouseRls(MouseRlsEvent e)
@@ -106,7 +109,7 @@ bool Window::windowMouseRls(MouseRlsEvent e)
 			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
 	}
 
-	return opcode;
+	return true;// opcode;
 }
 
 bool Window::windowKeyPrs(KeyPrsEvent e)

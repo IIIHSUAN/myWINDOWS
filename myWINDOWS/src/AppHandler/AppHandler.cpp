@@ -1,5 +1,4 @@
-﻿#include <iostream>
-#include <thread>
+﻿#include <thread>
 
 #include "AppHandler.h"
 
@@ -25,13 +24,34 @@ AppHandler::AppHandler()
 		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
 	update(0);
-	Sleep(1000);
+	Sleep(500);
+
+	photo = img2;
+	canvas.flush(L'⣿');
+	for (int i = 0; i < photo.getRowCount(); i++)
+		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
+	update(0);
+	Sleep(500);
+	photo = img3;
+	canvas.flush(L'⣿');
+	for (int i = 0; i < photo.getRowCount(); i++)
+		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
+	update(0);
+	Sleep(500);
+	photo = img4;
+	canvas.flush(L'⣿');
+	for (int i = 0; i < photo.getRowCount(); i++)
+		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
+	update(0);
+	Sleep(500);
 }
 
 void AppHandler::run()
 {
-	//createApp(AppCollection::Desktop);
-	createApp(AppCollection::Chess);
+	createApp(AppCollection::Desktop);
 
 	std::thread pollingThread(&AppHandler::pollingUpdate, this);
 	std::thread inputThread([]() {	Input::get().run(); });
@@ -80,17 +100,18 @@ void AppHandler::createApp(AppCollection name)
 
 void AppHandler::shutdown()
 {
+	if (!appVec.empty())
+		onEvent(ShutdownEvent());
 	isRun = false;
 
 	// use canvas draw
-	auto& photo = img;
+	auto& photo = img3;
 	canvas.flush(L'⣿');
 	for (int i = 0; i < photo.getRowCount(); i++)
 		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Bye!  "));
 	update(0);
-
-	//Sleep(2000);
+	Sleep(2000);
 }
 
 void AppHandler::pollingUpdate()
@@ -148,6 +169,10 @@ void AppHandler::update(bool isFlush)
 
 void AppHandler::onEvent(Event & e)  // from input
 {
+	if (e.getType() == EventType::shutdown)
+		for (auto& app : appVec)
+			app->onEvent(e);
+
 	if (e.getType() != EventType::unknown)
 		for (auto app = appVec.rbegin(); app != appVec.rend();)
 		{
@@ -157,8 +182,7 @@ void AppHandler::onEvent(Event & e)  // from input
 			if (!(*app)->getIsRun())
 			{
 				delete (*app);
-				auto it = appVec.erase(--app.base());
-				app = std::vector<App*>::reverse_iterator(it);
+				app = std::vector<App*>::reverse_iterator(appVec.erase(--app.base()));
 			}
 			else
 				app++;

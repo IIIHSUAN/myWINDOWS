@@ -2,6 +2,9 @@
 
 bool App::onEvent(Event & e)
 {
+	if (e.getType() == EventType::shutdown)
+		isRun = false;
+
 	for (auto window = windowVec.rbegin(); window != windowVec.rend();)
 	{
 		bool opcode = false;

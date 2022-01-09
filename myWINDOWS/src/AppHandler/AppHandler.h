@@ -1,6 +1,9 @@
 #pragma once
 
 #include <list>
+#include <thread>
+
+#define APPHANDLER_UPDATE_PERIOD AppHandler::get().getPollingPeriod()
 
 #include "AppHandler/IO.h"
 #include "Image/Image.h"
@@ -26,6 +29,7 @@ public:
 	void shutdown();
 
 	static AppHandler& get() { return *appHandler; }
+	inline const float& getPollingPeriod() { return pollingPeriod; }
 private:
 	static AppHandler* appHandler;
 	bool isRun = true;
@@ -35,7 +39,7 @@ private:
 	Canvas msgCanvas = Canvas({ MY_WINDOW_WIDTH / 2 - 20, MY_WINDOW_HEIGHT / 2 - 4 }, { 40,8 }, false, L'\u25A2');
 	bool isMsgRun = false;
 
-	float pollingPeriod = 0.5f;  //sec
+	const float pollingPeriod = 0.5f;  //sec
 	void pollingUpdate();
 	std::vector<App*> appVec;
 	void update(bool isFlush = true);

@@ -13,7 +13,12 @@ public:
 		inputFontSize->onkey([](KeyPrsEvent& e, std::wstring& str) {
 			if (e.getKey() == VK_RETURN)
 			{
-				Output::get().setFontSize(std::stoi(str));
+				try {
+					int fontsize = std::stoi(str);
+					Output::get().setFontSize(fontsize);
+				}
+				catch (...) { return false; }
+
 				return true;
 			}
 			return false;
