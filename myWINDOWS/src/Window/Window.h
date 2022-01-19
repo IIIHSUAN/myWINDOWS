@@ -23,8 +23,7 @@ public:
 
 	inline const int& getX() { return pos.x; }
 	inline const int& getY() { return pos.y; }
-	inline const int& getWidth() { return size.width; }
-	inline const int& getHeight() { return size.height; }
+	inline const Size& getSize() { return size; }
 	inline const int& getId() { return id; }
 	inline const bool& getIsRun() { return isRun; }
 	inline Canvas& getCanvas() { return canvas; }
@@ -35,26 +34,29 @@ public:
 	inline void setId(unsigned int i) { id = i; }
 
 	inline void setRecieveCallback(std::function<void(std::string)> func) { recieveCallback = func; };
-	inline void setMouseMoveCallback(std::function<bool(MouseMoveEvent&)> func) { mouseMoveCallback = func; };
-	inline void setMousePrsCallback(std::function<bool(MousePrsEvent&)> func) { mousePrsCallback = func; };
-	inline void setKeyPrsCallback(std::function<bool(KeyPrsEvent&)> func) { keyPrsCallback = func; };
+	inline void setMouseMoveCallback(std::function<bool(MouseMoveEvent)> func) { mouseMoveCallback = func; };
+	inline void setMousePrsCallback(std::function<bool(MousePrsEvent)> func) { mousePrsCallback = func; };
+	inline void setKeyPrsCallback(std::function<bool(KeyPrsEvent)> func) { keyPrsCallback = func; };
+	inline void setPollingCallback(std::function<void()> func) { pollingCallback = func; };
 
 	bool pollingUpdate();
 
 protected:
 	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) { ele_ptr->setId(elementsIdNum++), elementsVec.emplace_back(ele_ptr), elementsUpdate(); }
+	void refresh();
 private:
 	std::wstring name, title;
 	unsigned int id;
 	Pos pos;
 	Size size;
 	Canvas canvas;  // pos, size attr
+
 	
 	// element held by custom sub class
 	bool isNeedUpdate = false, isRun = true, isFocus = false;
 	unsigned int elementsIdNum = 0;
 	std::vector<std::shared_ptr<Elements>>elementsVec;
-	void elementsUpdate();
+	void elementsUpdate(bool forceUpdate = false);
 
 	bool onEvent(Event& e);
 	std::function<void(std::string)> recieveCallback = nullptr;
@@ -62,6 +64,7 @@ private:
 	std::function<bool(MousePrsEvent)> mousePrsCallback = nullptr;
 	std::function<bool(MouseRlsEvent)> mouseRlsCallback = nullptr;
 	std::function<bool(KeyPrsEvent)> keyPrsCallback = nullptr;
+	std::function<void()> pollingCallback = nullptr;
 
 	// run default
 	bool windowRecieve(std::string str);

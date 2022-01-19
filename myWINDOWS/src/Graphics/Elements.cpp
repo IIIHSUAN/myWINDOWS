@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <thread>
 
+#include <AppHandler/AppHandler.h>
+
 void Elements::flush_impl(wchar_t flushChar)
 {
 	if (flushChar)
@@ -65,12 +67,23 @@ bool Elements::_onMouseRls(MouseRlsEvent & e)
 	return isCallback;
 }
 
-/* Button ****************************************************/
+/* Label ****************************************************/
 
-Button::Button(const wchar_t * cstr, Pos pos, bool isFrame) :str(cstr), Elements(ElementsType::Button)
+Label::Label(const wchar_t * cstr, Pos4 pos4, const Size& parentSize) :str(cstr), Elements(ElementsType::Button)
 {
 	// set values
-	canvas = Canvas(pos, { int(str.length() + 16),5 }, isFrame, L'/');
+	canvas = Canvas(pos4, { int(str.length()),1 }, parentSize);
+
+	// update canvas
+	Elements::flush();
+}
+
+/* Button ****************************************************/
+
+Button::Button(const wchar_t * cstr, Pos4 pos4, const Size& parentSize, bool isFrame, Size padding) :str(cstr), Elements(ElementsType::Button)
+{
+	// set values
+	canvas = Canvas(pos4, { int(str.length() + padding.width * 2),padding.height * 2 + 1 }, parentSize, isFrame, L'/');
 
 	// update canvas
 	Elements::flush();
@@ -78,10 +91,7 @@ Button::Button(const wchar_t * cstr, Pos pos, bool isFrame) :str(cstr), Elements
 
 void Button::flush_impl(wchar_t flushChar)
 {
-	if (flushChar)
-		canvas.flush(flushChar);
-	else
-		canvas.flush();
+	flushChar? canvas.flush(flushChar): canvas.flush();
 
 	canvas.canvasCenterLine(str);
 }
@@ -120,21 +130,33 @@ bool Button::onMouseRls_impl(MouseRlsEvent & e)
 
 /* Inputbox ****************************************************/
 
-Inputbox::Inputbox(const wchar_t * cstr, Pos pos, int len, bool isFrame) :str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox)
+Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, const Size& parentSize, int len, bool isFrame) :str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox)
 {
 	// set values
-	canvas = Canvas(pos, { len + 2,3 }, isFrame, L' ');
+	canvas = Canvas(pos4, { len + 2,3 }, parentSize, isFrame, L' ');
 
 	// update canvas
-	Elements::flush();
+	flush();
+
+	// pollingCallback
+	setPollingCallback([this]() {
+		static int i = 0;
+		i = ++i % int(MY_UPDATE_FREQ);
+
+		if (isFlash && (i == 0 || i == int(MY_UPDATE_FREQ / 2)))
+		{
+			isWhite = !isWhite, isWhite ? canvas.flush(L'¢i') : flush();
+			return true;
+		}
+
+		return false;
+	});
 }
 
 void Inputbox::flush_impl(wchar_t flushChar)
 {
-	if (flushChar)
-		canvas.flush(flushChar);
-	else
-		canvas.flush(L' ');
+	flushChar ? canvas.flush(flushChar) : canvas.flush();
+
 
 	std::wstring cstr = L"  " + str;
 	canvas.line(1, 1, cstr.c_str(), cstr.length());
@@ -143,19 +165,7 @@ void Inputbox::flush_impl(wchar_t flushChar)
 bool Inputbox::onMouseMove_impl(MouseMoveEvent & e)
 {
 	if (info.mouseHover == InfoType::Active && !isFlash)
-	{
-		isFlash = true;
-
-		std::thread t([this]() {
-			bool isOn = false;
-			while (info.mouseHover == InfoType::Active && isFlash)
-				isOn = !isOn, isOn ? canvas.flush(L'¢i') : Elements::flush(), isNeedUpdate = true, Sleep(500);
-
- 			Elements::flush();
-			isFlash = false;
-		});
-		t.detach();
-	}
+		isFlash = true,	isWhite = false;
 	else if (info.mouseHover == InfoType::Cancel)
 	{
 		if(isFlash)
@@ -199,21 +209,58 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 	return opcode;
 }
 
-/* Panel ****************************************************/
+/* Image ****************************************************/
 
-Panel::Panel(Pos pos, Size size, bool isFrame, CharImage * charImage) :Elements(ElementsType::Panel), charImage(charImage)
+Image::Image(CharImage charImage,const Size& parentSize, bool isFrame) :charImage(charImage), Elements(ElementsType::Image)
 {
 	// set values
-	canvas = Canvas(pos, size, isFrame, L'+');
+	canvas = Canvas(charImage.pos4, charImage.size, parentSize, isFrame);
 
 	// update canvas
 	Elements::flush();
 }
 
-void Panel::flush_impl(wchar_t flushChar)
-{
-	canvas.flush();
+/* Paragraph ****************************************************/
 
-	if (charImage)
-		canvas.setBackground(*charImage);
+Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size size, const Size & parentSize, 
+	TextAlign textAlign, bool isFrame, wchar_t flushChar)
+	: str(cstr), textAlign(textAlign), Elements(ElementsType::Paragraph)
+{
+	// set values
+	canvas = Canvas(pos4, size, parentSize, isFrame, flushChar);
+
+	// update canvas
+	Elements::flush();
+}
+
+void Paragraph::flush_impl(wchar_t flushChar)
+{
+	flushChar ? canvas.flush(flushChar) : canvas.flush();
+
+	int i = 1, start = 0, end, breakInd;
+	do
+	{
+		if (str[start] == L'\n')
+		{
+			start++, i++;
+			continue;
+		}
+
+		end = start + canvas.getSize().width - 2 > str.length() ? str.length() : start + canvas.getSize().width - 2;
+
+		breakInd = str.find(L'\n', start + 1);
+		if (breakInd + 1 && breakInd < end)
+			end = breakInd;
+
+		if (textAlign == TextAlign::left)
+			canvas.line(1, i++, str.substr(start, end - start));
+		else if (textAlign == TextAlign::center)
+			canvas.lineCenter(canvas.getSize().width / 2, i++, str.substr(start, end - start));
+		else
+			canvas.line(canvas.getSize().width - (end - start) - 1, i++, str.substr(start, end - start));
+
+		start = end;
+		if (end == breakInd)
+			i--;
+	} while (end != str.length());
 }

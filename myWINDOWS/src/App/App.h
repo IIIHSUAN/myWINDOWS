@@ -7,7 +7,7 @@
 
 class AppHandler;
 
-#define CREATE_WINDOW(windowVec, windowEntity) windowVec.emplace_back(std::make_shared<Window>(windowEntity));
+#define PUSH_WINDOW(window_ptr, window_entity) window_ptr.reset(new window_entity), pushWindow(window_ptr)
 
 /*
  * template
@@ -18,7 +18,7 @@ class AppHandler;
 class App
 {
 public:
-	App(AppCollection app, std::vector<std::shared_ptr<Window>>& _windowVec) : app(app), windowVec(_windowVec) {}
+	App(AppCollection app) : app(app) {}
 
 	friend AppHandler;
 
@@ -32,12 +32,12 @@ public:
 
 	virtual void run() {}
 
-	inline void pushWindow(std::shared_ptr<Window>& window) { windowVec.emplace_back(window); }
+	inline void pushWindow(std::shared_ptr<Window>& window) { windowVec.emplace_back(window), window->refresh(); }
 protected:
 	bool isRun = true, isNeedUpdate = true;
 private:
 	AppCollection app;
-	std::vector<std::shared_ptr<Window>>& windowVec;  // ref of the windowVec, only for onEvent & pollingUpdate
+	std::vector<std::shared_ptr<Window>> windowVec;
 
 	bool onEvent(Event & e);
 };

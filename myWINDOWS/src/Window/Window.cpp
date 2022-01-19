@@ -5,9 +5,6 @@ Window::Window(int _id, std::wstring & _name, Pos & _pos, Size & _size) : id(_id
 	size.width = min(size.width, MY_WINDOW_WIDTH), size.height = min(size.height, MY_WINDOW_HEIGHT);
 	pos.y = max(min(pos.y, MY_WINDOW_HEIGHT - 2), 0);
 	canvas = Canvas(pos, size, true);
-
-	setTitle(name);
-	canvas.getCanvas().replace(size.width - 5, 4, L"  x ");
 }
 
 bool Window::onEvent(Event & e)
@@ -54,6 +51,25 @@ bool Window::windowMouseMove(MouseMoveEvent e)
 		return true;
 	}
 
+	// resize window
+	else if (e.getIsPrs() && e.getMouseX() >= size.width - 2 && e.getMouseY() >= size.height - 2)
+	{
+		size.width += e.getOffsetX(), size.height += e.getOffsetY();
+
+		if (size.width < 10 || size.width > MY_WINDOW_WIDTH)
+			size.width -= e.getOffsetX();
+		if (size.height < 3 || size.height > MY_WINDOW_HEIGHT)
+			size.height -= e.getOffsetY();
+
+		canvas.setSize(size);
+		for (auto& ele : elementsVec)
+			if (ele->getCanvas().getPos4().position == Position::relative)
+				ele->getCanvas().setParentSize(size);
+
+		refresh();
+		return true;
+	}
+
 	// Elements
 	bool opcode = false;
 	for (auto& ele : elementsVec)
@@ -61,7 +77,7 @@ bool Window::windowMouseMove(MouseMoveEvent e)
 		MouseMoveEvent ee = e;
 		opcode |= ele->onMouseMove(ee);
 		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
+			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
 	}
 
 	return true;// opcode;
@@ -87,7 +103,7 @@ bool Window::windowMousePrs(MousePrsEvent e)
 		MousePrsEvent ee = e;
 		opcode |= ele->onMousePrs(ee);
 		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
+			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
 	}
 
 	return true;// opcode;
@@ -106,7 +122,7 @@ bool Window::windowMouseRls(MouseRlsEvent e)
 		MouseRlsEvent ee = e;
 		opcode |= ele->onMouseRls(ee);
 		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
+			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
 	}
 
 	return true;// opcode;
@@ -121,24 +137,38 @@ bool Window::windowKeyPrs(KeyPrsEvent e)
 		KeyPrsEvent ee = e;
 		opcode |= ele->onKeyPrs(ee);
 		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWithRel(ele->getCanvas()), isNeedUpdate = true;
+			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
 	}
 
 	return opcode;
 }
 
+void Window::refresh()
+{
+	canvas.flush();
+	elementsUpdate(true);
+
+	canvas.frame();
+	setTitle(name),	canvas.getCanvas().replace(size.width - 5, 4, L"  x ");
+}
+
 bool Window::pollingUpdate()
 {
 	elementsUpdate();
-	bool b = isNeedUpdate; isNeedUpdate = false; return b;
+	
+	if (pollingCallback)
+		pollingCallback();
+
+	bool b = isNeedUpdate; isNeedUpdate = false;
+	return b;
 }
-void Window::elementsUpdate()
+void Window::elementsUpdate(bool forceUpdate)
 {
 	bool opcode = false;
 	for (auto&ele : elementsVec)
 	{
-		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWithRel(ele->getCanvas()), opcode |= true;		
+		if (forceUpdate || (ele->onPollingUpdate() && ele->getVisible()))
+			canvas.renderWith(ele->getCanvas()), opcode |= true;		
 	}
 	
 	isNeedUpdate |= opcode;

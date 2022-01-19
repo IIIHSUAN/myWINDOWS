@@ -4,14 +4,12 @@
 
 class Mouse {
 public:
-	int X = 20, Y = 5, offsetX, offsetY;
+	int X = 20, Y = 5, offsetX = 0, offsetY = 0;
 	bool isPrs = false;
 
 	enum Speed { normal = 1, fast = 2, vfast = 4 };
 	Speed speed = normal;
 	void changeSpeed() { speed = speed == normal ? fast : (speed == fast ? vfast : normal); }
-
-	enum Mode { cursor, flashing, block, flashingBlock };
 
 	static inline Mouse& get() { return *mouse; }
 private:
@@ -24,6 +22,9 @@ public:
 	Input();
 	void run();
 
+	inline void setIsEventUpdate(bool b) { isEventUpdate = b; }
+	inline const bool& getIsEventUpdate() { return isEventUpdate; }
+
 	static inline Input& get() { return *input; }
 private:
 	static Input* input;
@@ -31,6 +32,8 @@ private:
 	DWORD events, num;
 	INPUT_RECORD buffer;
 	HANDLE inHandle = GetStdHandle(STD_INPUT_HANDLE);
+
+	bool isEventUpdate = false;
 };
 
 /************************************************************************/
@@ -46,7 +49,7 @@ public:
 	static inline Output& get() { return *output; }
 private:
 	static Output* output;
-	int size = 30;
+	int size = 28;
 
 	DWORD num;
 	CONSOLE_FONT_INFOEX cfi;

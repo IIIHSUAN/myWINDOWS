@@ -15,17 +15,15 @@ public:
 class Chess :public App
 {
 public:
-	Chess(Pos pos = { 2,1 }) : App(AppCollection::Chess, windowVec) {
-		CREATE_WINDOW(windowVec, ChessWindow(0, L"Chess", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 5 }));
+	Chess(Pos pos = { 2,1 }) : App(AppCollection::Chess) {
+		PUSH_WINDOW(window, ChessWindow(0, L"Chess", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 5 }));
 
 		//App::setPollingUpdate(true);
 		
-		windowVec[0]->getCanvas().renderWithRel(board.canvas);
+		window->getCanvas().renderWith(board.canvas);
+		window->setMousePrsCallback([this](MousePrsEvent& e) {
 
-		windowVec[0]->setMousePrsCallback([this](MousePrsEvent& e) {
-
-			auto& window = windowVec[0];
-			ChessWindow& chessWindow = (ChessWindow&)windowVec[0];
+			ChessWindow& chessWindow = (ChessWindow&)window;
 
 			if (isGame == false)
 			{
@@ -35,8 +33,8 @@ public:
 
 			e.setPos({ e.getMouseX() - window->getX() , e.getMouseY() - window->getY() });
 
-			if (e.getMouseX() > 0 && e.getMouseX() < window->getWidth() - 1 &&
-				e.getMouseY() > 0 && e.getMouseY() < window->getHeight() - 1)
+			if (e.getMouseX() > 0 && e.getMouseX() < window->getSize().width - 1 &&
+				e.getMouseY() > 0 && e.getMouseY() < window->getSize().height - 1)
 			{
 				int opcode = board.onclick(e.getMouseX(), e.getMouseY());
 				if (opcode < 0)
@@ -46,7 +44,7 @@ public:
 				else if (opcode == 2)
 					window->getCanvas().line(60, 5, std::wstring(L" Black Win! ")), isGame = false;
 
-				window->getCanvas().renderWithRel(board.canvas);
+				window->getCanvas().renderWith(board.canvas);
 				return true;
 			}
 			return false;
@@ -54,7 +52,7 @@ public:
 	}
 
 private:
-	std::vector<std::shared_ptr<Window>> windowVec;
+	std::shared_ptr<Window> window;
 	Board board;
 	bool isGame = true;
 };

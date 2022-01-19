@@ -21,12 +21,6 @@ public:
 
 	inline std::vector<Pos>& getPace() { return moveVec; }
 	inline ChessType& getType() { return chessType; }
-	inline bool movable(Pos pace) {
-		for (Pos& move : moveVec)
-			if (pace == move)
-				return true;
-		return false;
-	}
 private:
 	ChessType chessType;
 	std::vector<Pos>moveVec;

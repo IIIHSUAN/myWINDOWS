@@ -1,4 +1,5 @@
 ﻿#include <thread>
+#include <algorithm>
 
 #include "AppHandler.h"
 
@@ -52,10 +53,10 @@ AppHandler::AppHandler()
 void AppHandler::run()
 {
 	createApp(AppCollection::Desktop);
-	createApp(AppCollection::Chess);
+	createApp(AppCollection::Settings);
 
-	std::thread pollingThread(&AppHandler::pollingUpdate, this);
-	std::thread inputThread([]() {	Input::get().run(); });
+	pollingThread = std::thread([this]() {try { pollingUpdate(); } catch (...) { return; } });
+	inputThread = std::thread([]() {	try { Input::get().run(); } catch (...) { return; }});
 
 	pollingThread.detach();
 	inputThread.join();
@@ -94,8 +95,17 @@ void AppHandler::createApp(AppCollection name)
 		break;
 	}
 
-	std::thread t([this]() { appVec[appVec.size() - 1]->run(); });
-	t.detach();
+	runThreadVec.emplace_back(std::thread([this]() {
+		try {
+			appVec.at(appVec.size() - 1)->run();  // if need update UI, use PollingUpdate
+		}
+		catch (...)
+		{
+			// msg here
+			return;
+		}
+	}));
+	runThreadVec.back().detach();
 }
 
 void AppHandler::shutdown()
@@ -105,6 +115,8 @@ void AppHandler::shutdown()
 	if (!appVec.empty())
 		onEvent(ShutdownEvent());
 
+	return;
+
 	// use canvas draw
 	auto& photo = img3;
 	canvas.flush(L'⣿');
@@ -112,7 +124,7 @@ void AppHandler::shutdown()
 		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Bye!  "));
 	update(0);
-	//Sleep(2000);
+	Sleep(5000);
 }
 
 void AppHandler::pollingUpdate()
@@ -125,10 +137,10 @@ void AppHandler::pollingUpdate()
 			if (app->pollingUpdate())
 				isNeedUpdate = true;
 
-		if (isNeedUpdate)
+		if (!Input::get().getIsEventUpdate() || isNeedUpdate)
 			update();
 
-		Sleep(1000 * pollingPeriod);
+		Sleep(int(1000 * pollingPeriod));
 	}
 }
 
@@ -150,17 +162,21 @@ void AppHandler::update(bool isFlush)
 	// msgThread
 	if (isMsg)
 	{
-		canvas.renderWithRel(msgCanvas);
+		canvas.renderWith(msgCanvas);
 		if (!isMsgRun)
 		{
 			isMsgRun = true;
-			std::thread t([this]() { while (--isMsg) Sleep(500); isMsgRun = false, update(); });
-			t.detach();
+			msgThread = std::thread([this]() {
+				try {
+					while (--isMsg) Sleep(500); isMsgRun = false, update();
+				} catch (...) { return; }
+			});
+			msgThread.detach();
 		}
 	}
-	
+
 	// mouseUI
-	canvas.getCanvas().at(index(mouse.Y, mouse.X)) = (mouse.isPrs ? L'\u29C8' : L'\u25A2');
+	canvas.getCanvas().at(index(Mouse::get().Y, Mouse::get().X)) = (Mouse::get().isPrs ? L'\u29C8' : L'\u25A2');
 
 	// draw
 	Output::get().display(canvas.getConstCanvas()); 
@@ -174,11 +190,17 @@ void AppHandler::onEvent(Event & e)  // from input
 		for (auto& app : appVec)
 			app->onEvent(e);
 
+
 	if (e.getType() != EventType::unknown)
 		for (auto app = appVec.rbegin(); app != appVec.rend();)
 		{
 			if ((*app)->onEvent(e))
+			{
+				if (e.getType() == EventType::mousePrs && *appVec.rbegin() != *app)
+					std::swap(*appVec.rbegin(), *app);
+
 				break;
+			}
 
 			if (!(*app)->getIsRun())
 			{
@@ -199,6 +221,7 @@ bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 		return false;
 
 	EventType e = EventType::unknown;
+	Mouse& mouse = Mouse::get();
 
 	if ((ctrl & RIGHT_CTRL_PRESSED)||(ctrl & SHIFT_PRESSED))
 	{

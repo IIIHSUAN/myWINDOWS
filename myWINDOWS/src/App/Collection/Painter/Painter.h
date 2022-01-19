@@ -14,18 +14,17 @@ public:
 class Painter :public App
 {
 public:
-	Painter(Pos pos = { 2,1 }) : App(AppCollection::Painter, windowVec) {
-		CREATE_WINDOW(windowVec, PainterWindow(0, L"Painter", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 10 }));
+	Painter(Pos pos = { 2,1 }) : App(AppCollection::Painter) {
+		PUSH_WINDOW(window, PainterWindow(0, L"Painter", pos, { 40,MY_WINDOW_HEIGHT - 10 }));
 
-		windowVec[0]->setMouseMoveCallback([this](MouseMoveEvent& e) {
-			auto& window = windowVec[0];
+		window->setMouseMoveCallback([this](MouseMoveEvent& e) {
 			e.setPos({ e.getMouseX() - window->getX() , e.getMouseY() - window->getY() });
 
 			if (e.getIsPrs() &&
-				e.getMouseX() > 0 && e.getMouseX() < window->getWidth() - 1 &&
-				e.getMouseY() > 0 && e.getMouseY() < window->getHeight() - 1)
+				e.getMouseX() > 0 && e.getMouseX() < window->getSize().width - 1 &&
+				e.getMouseY() > 0 && e.getMouseY() < window->getSize().height - 1)
 			{
-				getWindowVec()[0]->getCanvas().line(e.getMouseX(), e.getMouseY(), L"❉", 1);
+				window->getCanvas().line(e.getMouseX(), e.getMouseY(), L"❉", 1);
 				return true;
 			}
 			return false;
@@ -33,5 +32,5 @@ public:
 	}
 
 private:
-	std::vector<std::shared_ptr<Window>> windowVec;
+	std::shared_ptr<Window> window;
 };

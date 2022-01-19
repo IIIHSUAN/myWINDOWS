@@ -3,9 +3,18 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
-#define MY_WINDOW_HEIGHT 28
-#define MY_WINDOW_WIDTH 110
+#define MY_WINDOW_HEIGHT 25
+#define MY_WINDOW_WIDTH 100
 #define MY_WINDOW_PIXELS MY_WINDOW_HEIGHT * MY_WINDOW_WIDTH
+
+enum class Position { absolute, relative };
+enum class TextAlign { left, right, center };
+
+struct Pos4
+{
+	int left = -1, top = -1, right = -1, bottom = -1;
+	Position position;
+};
 
 struct Pos
 {
@@ -30,5 +39,5 @@ struct Size
 
 static int index(int Y, int X)
 {
-	return Y* MY_WINDOW_WIDTH+ X;
+	return Y * MY_WINDOW_WIDTH + X;
 }

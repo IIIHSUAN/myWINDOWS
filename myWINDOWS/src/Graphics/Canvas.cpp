@@ -2,26 +2,16 @@
 
 #include "Window/Window.h"
 
-Canvas::Canvas(Pos pos, Size size, bool isFrame, wchar_t flushChar)
-	: pos(pos), size(size), isFrame(isFrame), canvas(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar)
-{
-	if (isFrame)  // boundaries
-		for (int i = 0; i < size.height; i++)
-		{
-			canvas.replace(index(i, 0), 1, size.width, (i == 0 || i == size.height - 1) ? L'\u2550' : L' ');  // x axis
-			canvas.at(index(i, 0)) = (i == 0 ? L'\u2554' : (i == size.height - 1) ? L'\u255A' : L'\u2551');  // left
-			canvas.at(index(i, size.width - 1)) = (i == 0 ? L'\u2557' : (i == size.height - 1) ? L'\u255DE' : L'\u2551');  // right
-		}
-}
-
 void Canvas::flush(wchar_t newChar)
 {
-	std::wstring flushStr(size.width - isFrame * 2, newChar ? newChar : flushChar);
-	for (int i = isFrame; i < size.height - isFrame; i++)
+	std::wstring flushStr(size.width, newChar ? newChar : flushChar);
+	for (int i = 0; i < size.height; i++)
 		canvas.replace(
-			index(i, isFrame), size.width - isFrame * 2,
+			index(i, 0), size.width,
 			flushStr
 		);
+
+	frame();
 }
 
 void Canvas::line(int X, int Y, const wchar_t * str, const int len)  // draw in one line
@@ -62,7 +52,7 @@ void Canvas::lineCenter(int X, int Y, std::wstring& str)
 	line(X - str.length() / 2, Y, str.c_str(), str.length());
 }
 
-void Canvas::renderWithRel(Canvas & front)
+void Canvas::renderWith(Canvas & front)
 {
 	static int x, y, w, h, mx, my;
 	x = front.pos.x, y = front.pos.y;
@@ -75,24 +65,48 @@ void Canvas::renderWithRel(Canvas & front)
 
 void Canvas::renderWindow(Window& window)  // with custom size
 {
-	static int x, y, w, h;
+	static int x, y, w, h, mx, my;
 
-	x = window.getX(), y = window.getY(), w = min(window.getWidth(), MY_WINDOW_WIDTH - x), h = min(window.getHeight(), MY_WINDOW_HEIGHT - y);
-	static int mx, my; mx = min(0, x), my = min(0, y);
+	x = window.getX(), y = window.getY();
+	w = min(window.getSize().width, MY_WINDOW_WIDTH - x), h = min(window.getSize().height, MY_WINDOW_HEIGHT - y);
+	mx = min(0, x), my = min(0, y);
 
 	for (int i = -my; i < h && w>0; i++)
 		canvas.replace(index(i + y, x) - mx, w + mx, window.getCanvas().canvas, i*MY_WINDOW_WIDTH - mx, w + mx);
 }
-void Canvas::setBackground(CharImage & src)
+void Canvas::setCharImage(CharImage & src)
 {
-	static int w, h;
-	w = src.pos.x + src.size.width > size.width ? size.width - src.pos.x : src.size.width;
-	h = src.pos.y + src.size.height > size.height ? size.height - src.pos.y : src.size.height;
+	static int x, y, w, h;
+	x = x < 0 ? 0 : (x > size.width ? size.width : x);
+	y = y < 0 ? 0 : (y > size.height ? size.height : y);
+
+	w = x + src.size.width > size.width ? size.width - x : src.size.width;
+	h = y + src.size.height > size.height ? size.height - y : src.size.height;
 
 	for (int i = 0; i < h; i++)
 		canvas.replace(
-			index(i + src.pos.y, src.pos.x), w - 1,
+			index(i + y, x), w - 1,
 			src.data,
 			i*src.size.width - i, w - 1
 		);
+}
+
+void Canvas::setPos4(Pos4 pos4)
+{
+	pos.x = pos4.right > pos4.left ? ((pos4.position == Position::relative ? parentSize.width - size.width : originParentSize.width - size.width) - pos4.right) :
+		pos4.left;
+	pos.y = pos4.bottom > pos4.top ? ((pos4.position == Position::relative ? parentSize.height - size.height : originParentSize.height - size.height) - pos4.bottom) :
+		pos4.top;
+}
+
+void Canvas::frame()
+{
+	if(isFrame)
+		for (int i = 0; i < size.height; i++)
+		{
+			if (i == 0 || i == size.height - 1)  // top & bottom frame
+				canvas.replace(index(i, 0), size.width, size.width, L'\u2550');
+			canvas.at(index(i, 0)) = (i == 0 ? L'\u2554' : (i == size.height - 1) ? L'\u255A' : L'\u2551');  // left
+			canvas.at(index(i, size.width - 1)) = (i == 0 ? L'\u2557' : (i == size.height - 1) ? L'\u255DE' : L'\u2551');  // right
+		}
 }

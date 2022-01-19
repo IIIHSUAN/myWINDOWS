@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-class Image
+class ImageT
 {
 public:
-	Image(int columnCount,int rowCount, const wchar_t* data) :columnCount(columnCount), rowCount(rowCount), data(data) {}
+	ImageT(int columnCount,int rowCount, const wchar_t* data) :columnCount(columnCount), rowCount(rowCount), data(data) {}
 	const wchar_t* getData() { return data; }
 	int& getRowCount() { return rowCount; }
 	int& getColumnCount() { return columnCount; }
@@ -14,7 +14,7 @@ private:
 
 // 53 per row
 
-static Image img(35, 16,L"\
+static ImageT img(35, 16,L"\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⣫⣗⠽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⡛⢿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⠟⣡⣾⣻⣠⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡙⢿⣿⣿⣿⣿⣿⣿\
@@ -34,7 +34,7 @@ static Image img(35, 16,L"\
 ⣿⣿⣿⣿⡿⠏⠄⠄⠄⠸⣬⠻⡉⡃⠊⠋⠙⠋⠛⠋⠉⣱⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ");
 
-static Image img2(53, 16, L"\
+static ImageT img2(53, 16, L"\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠉⢙⣩⡙⢛⠛⠛⢛⠛⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠋⣀⣀⣤⣭⣥⣶⠾⣷⣿⣅⣋⣍⢀⡙⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠄⣴⠾⠟⠛⠉⠙⠠⠴⠤⠉⠛⢿⣿⣿⣦⣈⠅⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
@@ -54,7 +54,7 @@ static Image img2(53, 16, L"\
 ");
 
 
-static Image img3(47, 13,L"\
+static ImageT img3(47, 13,L"\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠄⠈⠉⠁⠈⠉⠉⠙⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠄⠈⠉⠁⠈⠉⠉⠙⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠄⠄⠄⠄⠄⣀⣀⣀⠄⠄⠄⠄⠄⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
@@ -70,7 +70,7 @@ static Image img3(47, 13,L"\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠄⠄⠄⠈⠴⢬⣙⣛⡥⠴⠂⠄⠄⠄⠄⠄⠄⠄⠄⠄⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ");
 
-static Image img4(50,16,L"\
+static ImageT img4(50,16,L"\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠄⠄⠄⠄⠄⠄⠄⢁⠈⢻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⡀⠭⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\
 ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠄⢀⣾⣿⣿⣿⣷⣶⣿⣷⣶⣶⡆⠄⠄⠄⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\

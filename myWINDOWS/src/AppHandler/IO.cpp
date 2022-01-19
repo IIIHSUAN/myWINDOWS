@@ -29,7 +29,7 @@ void Input::run()
 			break;
 		}
 
-		if (isFlush)
+		if (isEventUpdate && isFlush)
 			appHandler.update();
 	}
 }
@@ -40,8 +40,6 @@ Output* Output::output = new Output();
 
 Output::Output()
 {
-//	system("chcp 65001");
-
 	cfi.cbSize = sizeof cfi;
 	cfi.nFont = 0;
 	cfi.dwFontSize.Y = size;
@@ -58,17 +56,11 @@ void Output::display(const wchar_t* pixels)
 
 	//SetConsoleTextAttribute(outHandle, 100);  //0~254
 
-//	wcscpy_s(cfi.FaceName, L"Lucida Console");
-//	SetCurrentConsoleFontEx(outHandle, FALSE, &cfi);
-
 	for (int i = 0; i < MY_WINDOW_HEIGHT; i++)
 	{
 		WriteConsoleW(outHandle, pixels + i * MY_WINDOW_WIDTH, MY_WINDOW_WIDTH, &num, NULL);
 		wprintf(L"\n");
 	}
-	
-//	wcscpy_s(cfi.FaceName, L"MS Gothic");
-//	SetCurrentConsoleFontEx(outHandle, FALSE, &cfi);
 }
 
 void Output::setFontSize(int _size)

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "ChessInfo.h"
+#include "ChessClass.h"
 
 enum ChessId :int {
 	None = -16,
@@ -72,7 +72,5 @@ public:
 class Pawn :public ChessClass
 {
 public:
-	Pawn() :ChessClass(ChessType::Pawn, L"♙", L"♙♟︎", {
-			{0,1},{0,2}
-		}) {}
+	Pawn() :ChessClass(ChessType::Pawn, L"♙", L"♙♟︎", {}) {}  // all pace special
 };
