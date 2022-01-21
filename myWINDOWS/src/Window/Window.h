@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <vector>
+#include <list>
 
 #include "Event.h"
 #include "Graphics/Canvas.h"
@@ -12,22 +12,25 @@ class App;
 class Elements;
 
 #define PUSH_ELEMENTS(ele_ptr, ele_entity) ele_ptr.reset(new ele_entity), pushElements(ele_ptr)
+#define ZINDEX(ele_ptr, index) zIndex((std::shared_ptr<Elements>)ele_ptr, index)
+#define FRONT(ind) getElementsListSize() - 1 - ind
 
 class Window
 {
 public:
-	Window(int _id, std::wstring& _name, Pos& _pos, Size& _size);
+	Window(int _id, std::wstring& _name, Pos& _pos, Size& _size, const wchar_t flushChar = L' ');
 	
 	friend class App;
 	friend class Elements;
 
 	inline const int& getX() { return pos.x; }
 	inline const int& getY() { return pos.y; }
+	inline const Pos& getPos() { return pos; }
 	inline const Size& getSize() { return size; }
 	inline const int& getId() { return id; }
 	inline const bool& getIsRun() { return isRun; }
 	inline Canvas& getCanvas() { return canvas; }
-	inline std::vector<std::shared_ptr<Elements>>& getElementsVec() { return elementsVec; }
+	inline std::list<std::shared_ptr<Elements>>& getElementsList() { return elementsList; }
 
 	inline void setWindowOffset(int offsetX, int offsetY) { pos.x += offsetX, pos.y += offsetY, canvas.setPos(pos); }
 	inline void setTitle(std::wstring& str) { title = L"  " + str + L"  ", canvas.getCanvas().replace(3, title.length(), title); }
@@ -40,9 +43,14 @@ public:
 	inline void setPollingCallback(std::function<void()> func) { pollingCallback = func; };
 
 	bool pollingUpdate();
-
+	
+	inline void setIsPollingRefresh(bool b) { isForcePollingRefresh = b; }
 protected:
-	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) { ele_ptr->setId(elementsIdNum++), elementsVec.emplace_back(ele_ptr), elementsUpdate(); }
+	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) { 
+		ele_ptr->setZindex(int(elementsList.size())), ele_ptr->setId(elementsIdNum++), elementsList.emplace_back(ele_ptr), elementsUpdate();
+	}
+	int getElementsListSize() { return int(elementsList.size()); }
+
 	void refresh();
 private:
 	std::wstring name, title;
@@ -50,13 +58,15 @@ private:
 	Pos pos;
 	Size size;
 	Canvas canvas;  // pos, size attr
-
 	
 	// element held by custom sub class
-	bool isNeedUpdate = false, isRun = true, isFocus = false;
+	bool isNeedUpdate = false, isRun = true, isForcePollingRefresh = false;
 	unsigned int elementsIdNum = 0;
-	std::vector<std::shared_ptr<Elements>>elementsVec;
+	std::list<std::shared_ptr<Elements>>elementsList;
 	void elementsUpdate(bool forceUpdate = false);
+
+	void zindex(unsigned int& ind, unsigned int& ele_zindex);
+	void ajustZindex();
 
 	bool onEvent(Event& e);
 	std::function<void(std::string)> recieveCallback = nullptr;

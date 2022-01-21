@@ -55,5 +55,5 @@ private:
   ┗━━━━━━━━━━━━━━━━━┛  \
     a b c d e f g h    ";
 
-	CharImage frame = { frameData ,{1,1}, {24,11} };
+	CharImage frame = { frameData ,{Left(1),Top(1)}, {24,11} };
 };

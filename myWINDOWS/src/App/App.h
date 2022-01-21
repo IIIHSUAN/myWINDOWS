@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <list>
 
 #include "Window/Window.h"
 #include "AppCollection.h"
@@ -22,8 +22,8 @@ public:
 
 	friend AppHandler;
 
-	inline void setWindowVec(std::vector<std::shared_ptr<Window>>& _windowVec) { windowVec = _windowVec; }
-	inline std::vector<std::shared_ptr<Window>>& getWindowVec() { return windowVec; }
+	inline void setWindowList(std::list<std::shared_ptr<Window>>& _windowList) { windowList = _windowList; }
+	inline std::list<std::shared_ptr<Window>>& getWindowList() { return windowList; }
 
 	inline AppCollection& getApp() { return app; }
 	inline bool& getIsRun() { return isRun; }
@@ -32,12 +32,12 @@ public:
 
 	virtual void run() {}
 
-	inline void pushWindow(std::shared_ptr<Window>& window) { windowVec.emplace_back(window), window->refresh(); }
+	inline void pushWindow(std::shared_ptr<Window>& window) { windowList.emplace_back(window), window->refresh(); }
 protected:
 	bool isRun = true, isNeedUpdate = true;
 private:
 	AppCollection app;
-	std::vector<std::shared_ptr<Window>> windowVec;
+	std::list<std::shared_ptr<Window>> windowList;
 
 	bool onEvent(Event & e);
 };

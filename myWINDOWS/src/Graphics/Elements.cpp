@@ -1,4 +1,4 @@
-#include "Elements.h"
+﻿#include "Elements.h"
 
 #include <Windows.h>
 #include <thread>
@@ -67,12 +67,79 @@ bool Elements::_onMouseRls(MouseRlsEvent & e)
 	return isCallback;
 }
 
+bool Elements::onPollingUpdate(bool& isForceWindowRefresh)
+{
+	bool b = isNeedUpdate;
+	if (pollingCallback) b |= pollingCallback();
+	if(animFunc) animFunc(isAnimInit), isForceWindowRefresh |= true;
+	if (animCallback) animCallback(), animCallback = nullptr;
+	isNeedUpdate = false; return b;
+}
+
+void Elements::animate(Animate animAttr, std::function<void()> completeCallback)
+{
+	float dx, dy, dw, dh, dt = AppHandler::get().getPollingPeriod(),
+		xx = float(canvas.getPos().x), yy = float(canvas.getPos().y), ww = float(canvas.getSize().width), hh = float(canvas.getSize().height), tt = 0.0f;
+
+	if (animAttr.isPosAnim)
+		dx = (animAttr.toPos.x - xx)* dt / animAttr.duration,
+		dy = (animAttr.toPos.y - yy)* dt / animAttr.duration;
+
+	if (animAttr.isSizeAnim)
+		dw = (animAttr.toSize.width - ww)* dt / animAttr.duration,
+		dh = (animAttr.toSize.height - hh)* dt / animAttr.duration;
+
+	isAnimInit = false;
+
+	animFunc = [animAttr, dx, dy, dw, dh, dt, xx, yy, ww, hh, tt, completeCallback, this](bool& isInit) {
+
+		static float x, y, w, h, t;	static Pos lastPos;	static Size lastSize;
+		if (!isInit)
+			x = xx, y = yy, w = ww, h = hh, t = tt, lastPos = canvas.getPos(), lastSize = canvas.getSize(), isInit = true;
+
+		t += dt;
+		bool opcode = false;
+
+		if (t < animAttr.duration)
+		{
+			if (animAttr.isPosAnim)
+			{
+				x += dx, y += dy;
+
+				if (lastPos.x != int(x) || lastPos.y != int(y))
+				{
+					canvas.setPos({ int(x),int(y) }), lastPos = canvas.getPos();
+					opcode |= true;
+				}
+			}
+
+			if (animAttr.isSizeAnim)
+			{
+				w += dw, h += dh;
+
+				if (lastSize.width != int(x) || lastSize.height != int(y))
+				{
+					canvas.setSize({ int(w),int(h) }), lastSize = canvas.getSize();
+					opcode |= true;
+				}
+			}
+		}
+		else
+		{
+			if (completeCallback) setAnimCallback(completeCallback);
+			animFunc = nullptr;
+		}
+
+		return opcode;
+	};
+}
+
 /* Label ****************************************************/
 
-Label::Label(const wchar_t * cstr, Pos4 pos4, const Size& parentSize) :str(cstr), Elements(ElementsType::Button)
+Label::Label(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize) :str(cstr), Elements(ElementsType::Button)
 {
 	// set values
-	canvas = Canvas(pos4, { int(str.length()),1 }, parentSize);
+	canvas = Canvas(pos4, { int(str.length()),1 }, parentPos, parentSize);
 
 	// update canvas
 	Elements::flush();
@@ -80,10 +147,10 @@ Label::Label(const wchar_t * cstr, Pos4 pos4, const Size& parentSize) :str(cstr)
 
 /* Button ****************************************************/
 
-Button::Button(const wchar_t * cstr, Pos4 pos4, const Size& parentSize, bool isFrame, Size padding) :str(cstr), Elements(ElementsType::Button)
+Button::Button(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize, bool isFrame, Size padding) :str(cstr), Elements(ElementsType::Button)
 {
 	// set values
-	canvas = Canvas(pos4, { int(str.length() + padding.width * 2),padding.height * 2 + 1 }, parentSize, isFrame, L'/');
+	canvas = Canvas(pos4, { int(str.length() + padding.width * 2),padding.height * 2 + 1 }, parentPos, parentSize, isFrame, L'╳');
 
 	// update canvas
 	Elements::flush();
@@ -99,14 +166,15 @@ void Button::flush_impl(wchar_t flushChar)
 bool Button::onMouseMove_impl(MouseMoveEvent & e)
 {
 	if (info.mouseHover == InfoType::Active)
-		Elements::flush(L'+');
+		Elements::flush(L'╬');
 	else
 		Elements::flush();
 
 	bool opcode = false;
 	if (mouseHoverCallback)
-		opcode |= mouseHoverCallback(*this);
-	return opcode;
+		opcode |= mouseHoverCallback();
+
+	return true;
 }
 
 bool Button::onMousePrs_impl(MousePrsEvent & e)
@@ -124,28 +192,28 @@ bool Button::onMouseRls_impl(MouseRlsEvent & e)
 		Elements::flush();
 
 	if (info.mouseClick == InfoType::Active && mouseClkCallback)
-		opcode |= mouseClkCallback(*this);
+		opcode |= mouseClkCallback();
 	return opcode;
 }
 
 /* Inputbox ****************************************************/
 
-Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, const Size& parentSize, int len, bool isFrame) :str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox)
+Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize, int len, bool isFrame) :str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox)
 {
 	// set values
-	canvas = Canvas(pos4, { len + 2,3 }, parentSize, isFrame, L' ');
+	canvas = Canvas(pos4, { len + 2,3 }, parentPos, parentSize, isFrame, L' ');
 
 	// update canvas
 	flush();
 
 	// pollingCallback
-	setPollingCallback([this]() {
-		static int i = 0;
-		i = ++i % int(MY_UPDATE_FREQ);
+	int timeCount = 0;
+	setPollingCallback([&timeCount, this]() {
+		timeCount = ++timeCount % int(MY_UPDATE_FREQ);
 
-		if (isFlash && (i == 0 || i == int(MY_UPDATE_FREQ / 2)))
+		if (isFlash && (timeCount == 0 || timeCount == int(MY_UPDATE_FREQ / 2)))
 		{
-			isWhite = !isWhite, isWhite ? canvas.flush(L'�i') : flush();
+			isWhite = !isWhite, isWhite ? canvas.flush(L'█') : flush();
 			return true;
 		}
 
@@ -159,7 +227,7 @@ void Inputbox::flush_impl(wchar_t flushChar)
 
 
 	std::wstring cstr = L"  " + str;
-	canvas.line(1, 1, cstr.c_str(), cstr.length());
+	canvas.line(1, 1, cstr.c_str(), int(cstr.length()));
 }
 
 bool Inputbox::onMouseMove_impl(MouseMoveEvent & e)
@@ -203,7 +271,7 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 		flush();
 
 		if(keyPrsCallback)
-			opcode |= keyPrsCallback(e, str);
+			opcode |= keyPrsCallback(e);
 	}
 	
 	return opcode;
@@ -211,10 +279,10 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 
 /* Image ****************************************************/
 
-Image::Image(CharImage charImage,const Size& parentSize, bool isFrame) :charImage(charImage), Elements(ElementsType::Image)
+Image::Image(CharImage charImage, const Pos& parentPos, const Size& parentSize, bool isFrame) :charImage(charImage), Elements(ElementsType::Image)
 {
 	// set values
-	canvas = Canvas(charImage.pos4, charImage.size, parentSize, isFrame);
+	canvas = Canvas(charImage.pos4, charImage.size, parentPos, parentSize, isFrame);
 
 	// update canvas
 	Elements::flush();
@@ -222,12 +290,12 @@ Image::Image(CharImage charImage,const Size& parentSize, bool isFrame) :charImag
 
 /* Paragraph ****************************************************/
 
-Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size size, const Size & parentSize, 
-	TextAlign textAlign, bool isFrame, wchar_t flushChar)
-	: str(cstr), textAlign(textAlign), Elements(ElementsType::Paragraph)
+Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size size, const Pos& parentPos, const Size & parentSize,
+	TextAlign textAlign, bool isFrame, Size padding, wchar_t flushChar)
+	: str(cstr), textAlign(textAlign), padding(padding), Elements(ElementsType::Paragraph)
 {
 	// set values
-	canvas = Canvas(pos4, size, parentSize, isFrame, flushChar);
+	canvas = Canvas(pos4, size, parentPos, parentSize, isFrame, flushChar);
 
 	// update canvas
 	Elements::flush();
@@ -237,7 +305,7 @@ void Paragraph::flush_impl(wchar_t flushChar)
 {
 	flushChar ? canvas.flush(flushChar) : canvas.flush();
 
-	int i = 1, start = 0, end, breakInd;
+	int i = padding.height, start = 0, end, breakInd;
 	do
 	{
 		if (str[start] == L'\n')
@@ -246,21 +314,22 @@ void Paragraph::flush_impl(wchar_t flushChar)
 			continue;
 		}
 
-		end = start + canvas.getSize().width - 2 > str.length() ? str.length() : start + canvas.getSize().width - 2;
+		end = start + canvas.getSize().width - 2 * padding.width > str.length() ?
+			int(str.length()) : start + canvas.getSize().width - 2 * padding.width;
 
-		breakInd = str.find(L'\n', start + 1);
+		breakInd = int(str.find(L'\n', start + 1));
 		if (breakInd + 1 && breakInd < end)
 			end = breakInd;
 
 		if (textAlign == TextAlign::left)
-			canvas.line(1, i++, str.substr(start, end - start));
+			canvas.line(padding.width, i++, str.substr(start, end - start));
 		else if (textAlign == TextAlign::center)
 			canvas.lineCenter(canvas.getSize().width / 2, i++, str.substr(start, end - start));
 		else
-			canvas.line(canvas.getSize().width - (end - start) - 1, i++, str.substr(start, end - start));
+			canvas.line(canvas.getSize().width - (end - start) - padding.width, i++, str.substr(start, end - start));
 
 		start = end;
 		if (end == breakInd)
 			i--;
-	} while (end != str.length());
+	} while (end != str.length() && i < canvas.getSize().height - padding.height);
 }

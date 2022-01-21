@@ -16,6 +16,20 @@
 class App;
 class Window;
 
+struct Animate
+{
+	Pos toPos;
+	Size toSize;
+	bool isPosAnim = false, isSizeAnim = false;
+	float duration;
+	enum Easing { linear, swing, ritard, accel };
+	Easing easing;
+
+	Animate(Pos pos, Size size, float duration, Easing easing = linear) :toPos(pos), toSize(size), duration(duration), easing(easing) { isPosAnim = true, isSizeAnim = true; }
+	Animate(Pos pos, float duration, Easing easing = linear) :toPos(pos), duration(duration), easing(easing) { isPosAnim = true; }
+	Animate(Size size, float duration, Easing easing = linear) :toSize(size), duration(duration), easing(easing) { isSizeAnim = true; }
+};
+
 enum class InfoType { None, Active, Cancel };
 struct ElementsInfo
 {
@@ -41,7 +55,10 @@ public:
 	inline bool onKeyPrs(KeyPrsEvent& e) { return onKeyPrs_impl(e); }	                                   // be sure to set isNeedUpdate
 
 	inline bool pendingUpdate() { bool b = isNeedUpdate; isNeedUpdate = false; return b; }
-	inline bool onPollingUpdate() { bool b = isNeedUpdate; if (pollingCallback) b |= pollingCallback(); isNeedUpdate = false; return b; }
+	bool onPollingUpdate(bool& isForceWindowRefresh);
+
+	void animate(Animate animateAttr, std::function<void()> completeCallback = nullptr);
+	inline void setAnimCallback(std::function<void()> func) { animCallback = func; }
 
 	inline void setPos4(Pos4 _pos4) { canvas.setPos4(_pos4); }
 	inline void setVisible(bool b) { info.isVisible = b; }
@@ -50,6 +67,9 @@ public:
 	inline const ElementsType& getType() { return type; }
 	inline const unsigned int& getId() { return id; }
 	inline const ElementsInfo& getInfo() { return info; }
+
+	inline void setZindex(const unsigned int& i) { zindex = i, isForceZindex = true; }
+	inline bool pollingZindex() { bool b = isForceZindex; isForceZindex = false; return b; }
 protected:
 	virtual void flush_impl(wchar_t flushChar) = 0;
 	virtual bool onMouseMove_impl(MouseMoveEvent& e) { return false; }
@@ -64,8 +84,9 @@ protected:
 	bool isNeedUpdate = false;
 private:
 	ElementsType type;
-	unsigned int id;
+	unsigned int id, zindex;
 	inline void setId(const unsigned int& i) { id = i; }
+	bool isForceZindex = false;
 
 	std::function<bool()> pollingCallback = nullptr;
 
@@ -73,6 +94,10 @@ private:
 	bool _onMouseMove(MouseMoveEvent& e);
 	bool _onMousePrs(MousePrsEvent& e);
 	bool _onMouseRls(MouseRlsEvent& e);
+
+	bool isAnimInit = false;
+	std::function<bool(bool&)> animFunc = nullptr;
+	std::function<void()> animCallback = nullptr;
 };
 
 /* Label ****************************************************/
@@ -80,13 +105,13 @@ private:
 class Label : public Elements
 {
 public:
-	Label(const wchar_t * cstr, Pos4 pos4, const Size& parentSize);
+	Label(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize);
 
 	inline void setString(std::wstring _str) { str = _str; flush(); }
 private:
 	std::wstring str;
 
-	virtual void flush_impl(wchar_t flushChar) override { canvas.setWidth(str.length()), canvas.canvasCenterLine(str); }
+	virtual void flush_impl(wchar_t flushChar) override { canvas.setWidth(int(str.length())), canvas.canvasCenterLine(str); }
 };
 
 /* Button ****************************************************/
@@ -94,12 +119,12 @@ private:
 class Button :public Elements
 {
 public:
-	Button(const wchar_t * cstr, Pos4 pos4, const Size& parentSize, bool isFrame, Size padding = Size({ 6,2 }));
+	Button(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize, bool isFrame, Size padding = Size({ 6,2 }));
 
 	inline void setString(std::wstring _str, wchar_t flushChar = 0) { str = _str; flush(flushChar); }
 	
-	void onhover(std::function<bool(Button&)> func) { mouseHoverCallback = func; }
-	void onclick(std::function<bool(Button&)> func) { mouseClkCallback = func; }
+	void onhover(std::function<bool()> func) { mouseHoverCallback = func; }
+	void onclick(std::function<bool()> func) { mouseClkCallback = func; }
 private:
 	std::wstring str;
 	
@@ -108,8 +133,8 @@ private:
 	virtual bool onMousePrs_impl(MousePrsEvent& e) override;
 	virtual bool onMouseRls_impl(MouseRlsEvent& e) override;
 
-	std::function<bool(Button&)> mouseHoverCallback = nullptr;
-	std::function<bool(Button&)> mouseClkCallback = nullptr;
+	std::function<bool()> mouseHoverCallback = nullptr;
+	std::function<bool()> mouseClkCallback = nullptr;
 };
 
 /* Inputbox ****************************************************/
@@ -117,12 +142,13 @@ private:
 class Inputbox :public Elements
 {
 public:
-	Inputbox(const wchar_t * cstr, Pos4 pos4, const Size& parentSize, int len, bool isFrame);
+	Inputbox(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize, int len, bool isFrame);
 	~Inputbox() { isFlash = false; }
 
-	void onkey(std::function<bool(KeyPrsEvent& e, std::wstring&)> func) { keyPrsCallback = func; }
+	void onkey(std::function<bool(KeyPrsEvent&)> func) { keyPrsCallback = func; }
 
-	inline void setString(std::wstring _str, wchar_t flushChar = 0) { str = _str; flush(flushChar); }
+	inline void setString(std::wstring _str, wchar_t flushChar = 0) { str = _str, originStr = _str; flush(flushChar); }
+	inline std::wstring& getString() { return str; }
 private:
 	std::wstring str, originStr;
 	int len;
@@ -133,7 +159,7 @@ private:
 	virtual bool onMouseRls_impl(MouseRlsEvent& e) override; 
 	virtual bool onKeyPrs_impl(KeyPrsEvent& e) override;
 
-	std::function<bool(KeyPrsEvent& e, std::wstring&)> keyPrsCallback = nullptr;
+	std::function<bool(KeyPrsEvent&)> keyPrsCallback = nullptr;
 };
 
 /* Image ****************************************************/
@@ -141,7 +167,7 @@ private:
 class Image : public Elements
 {
 public:
-	Image(CharImage charImage, const Size& parentSize, bool isFrame = false);
+	Image(CharImage charImage, const Pos& parentPos, const Size& parentSize, bool isFrame = false);
 private:
 	CharImage charImage;
 
@@ -153,13 +179,14 @@ private:
 class Paragraph : public Elements
 {
 public:
-	Paragraph(const wchar_t * cstr, Pos4 pos4, Size size, const Size& parentSize, 
-		TextAlign textAlign = TextAlign::left, bool isFrame = false, wchar_t flushChar = L'•');
+	Paragraph(const wchar_t * cstr, Pos4 pos4, Size size, const Pos& parentPos, const Size& parentSize,
+		TextAlign textAlign = TextAlign::left, bool isFrame = false, Size padding = Size({ 2,1 }), wchar_t flushChar = L'•');
 
 	inline void setString(std::wstring _str, wchar_t flushChar = 0) { str = _str; flush(flushChar); }
 private:
 	std::wstring str;
 	TextAlign textAlign;
+	Size padding;
 
 	virtual void flush_impl(wchar_t flushChar) override;
 };

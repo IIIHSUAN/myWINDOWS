@@ -1,34 +1,34 @@
 ﻿#include "Window.h"
 
-Window::Window(int _id, std::wstring & _name, Pos & _pos, Size & _size) : id(_id), name(_name), pos(_pos), size(_size)
+Window::Window(int _id, std::wstring & _name, Pos & _pos, Size & _size, const wchar_t flushChar) : id(_id), name(_name), pos(_pos), size(_size)
 {
 	size.width = min(size.width, MY_WINDOW_WIDTH), size.height = min(size.height, MY_WINDOW_HEIGHT);
 	pos.y = max(min(pos.y, MY_WINDOW_HEIGHT - 2), 0);
-	canvas = Canvas(pos, size, true);
+	canvas = Canvas(pos, size, true, flushChar);
 }
 
 bool Window::onEvent(Event & e)
 {
-	bool opcode = false;  // isHandled
+	bool isHandled = false;  // isHandled
 	switch (e.getType())
 	{
 	case EventType::mouseMove:
-		FUNC(opcode, windowMouseMove, app, *this, mouseMoveCallback, MouseMoveEvent, e);
+		FUNC(isHandled, windowMouseMove, app, *this, mouseMoveCallback, MouseMoveEvent, e);
 		break;
 	case EventType::mousePrs:
-		FUNC(opcode, windowMousePrs, app, *this, mousePrsCallback, MousePrsEvent, e);
+		FUNC(isHandled, windowMousePrs, app, *this, mousePrsCallback, MousePrsEvent, e);
 		break;
 	case EventType::mouseRls:
-		FUNC(opcode, windowMouseRls, app, *this, mouseRlsCallback, MouseRlsEvent, e);
+		FUNC(isHandled, windowMouseRls, app, *this, mouseRlsCallback, MouseRlsEvent, e);
 		break;
 	case EventType::keyPrs:
-		FUNC(opcode, windowKeyPrs, app, *this, keyPrsCallback, KeyPrsEvent, e);
+		FUNC(isHandled, windowKeyPrs, app, *this, keyPrsCallback, KeyPrsEvent, e);
 		break;
 	case EventType::shutdown:
 		isRun = false;
 		break;
 	}
-	return opcode;
+	return isHandled;
 }
 
 bool Window::windowRecieve(std::string str)
@@ -42,8 +42,37 @@ bool Window::windowMouseMove(MouseMoveEvent e)
 	if (e.getMouseX() < -1 || e.getMouseX() > size.width || e.getMouseY() < -1 || e.getMouseY() > size.height)
 		return false;
 
+	// resize window
+	int direction = 0;
+	if (e.getIsPrs() && (
+		(e.getMouseX() <= 1			 && e.getMouseY() <= 1					 && (direction = 1)) ||  // top-left
+		(e.getMouseX() >= size.width - 2 && e.getMouseY() <= 1				 && (direction = 2)) ||  // top-right
+		(e.getMouseX() >= size.width - 2 && e.getMouseY() >= size.height - 2 && (direction = 3)) ||  // bottom-right
+		(e.getMouseX() <= 1			 && e.getMouseY() >= size.height - 2 && (direction = 4))     // bottom-left
+		) && direction)
+	{
+		if (size.width >= 20 && size.width <= MY_WINDOW_WIDTH)
+			if (direction == 1 || direction == 4)
+				pos.x += e.getOffsetX(), size.width -= e.getOffsetX();
+			else
+				size.width += e.getOffsetX();
+
+		if (size.height >= 5 && size.height <= MY_WINDOW_HEIGHT)
+			if (direction <= 2)
+				pos.y += e.getOffsetY(), size.height -= e.getOffsetY();
+			else
+				size.height += e.getOffsetY();
+
+		canvas.setSize(size);
+		for (auto& ele : elementsList)
+			e.getOffsetX() ? ele->getCanvas().setParentWidth(size.width) : ele->getCanvas().setParentHeight(size.height);
+
+		refresh();
+		return true;
+	}
+
 	// move window
-	if (e.getIsPrs() &&
+	else if (e.getIsPrs() &&
 		((e.getMouseY() == e.getOffsetY() && e.getMouseX() > 0 && e.getMouseX() < size.width) ||  // top frame
 		(e.getMouseX() == e.getOffsetX()) && e.getMouseY() > 0 && e.getMouseY() < size.height))  // left frame
 	{
@@ -51,36 +80,28 @@ bool Window::windowMouseMove(MouseMoveEvent e)
 		return true;
 	}
 
-	// resize window
-	else if (e.getIsPrs() && e.getMouseX() >= size.width - 2 && e.getMouseY() >= size.height - 2)
-	{
-		size.width += e.getOffsetX(), size.height += e.getOffsetY();
-
-		if (size.width < 10 || size.width > MY_WINDOW_WIDTH)
-			size.width -= e.getOffsetX();
-		if (size.height < 3 || size.height > MY_WINDOW_HEIGHT)
-			size.height -= e.getOffsetY();
-
-		canvas.setSize(size);
-		for (auto& ele : elementsVec)
-			if (ele->getCanvas().getPos4().position == Position::relative)
-				ele->getCanvas().setParentSize(size);
-
-		refresh();
-		return true;
-	}
-
 	// Elements
-	bool opcode = false;
-	for (auto& ele : elementsVec)
+	bool isHandled = false;
+	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
+	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
 	{
 		MouseMoveEvent ee = e;
-		opcode |= ele->onMouseMove(ee);
-		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
+		isHandled = (*ele)->onMouseMove(ee);
+		if ((*ele)->pendingUpdate() && (*ele)->getVisible())
+		{
+			isNeedUpdate = true;
+			frontRenderEle = std::next(ele.base(), -1);
+		}
+
+		if (isHandled)
+			break;
 	}
 
-	return true;// opcode;
+	// render from front Elements
+	for (auto ele2 = frontRenderEle; ele2 != elementsList.end(); ele2++)
+		canvas.renderWith((*ele2)->getCanvas());
+
+	return true;
 }
 
 bool Window::windowMousePrs(MousePrsEvent e)
@@ -95,18 +116,28 @@ bool Window::windowMousePrs(MousePrsEvent e)
 		isRun = false, isNeedUpdate = true;
 		return true;
 	}
-
 	// Elements
-	bool opcode = false;
-	for (auto& ele : elementsVec)
+	bool isHandled = false;
+	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
+	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
 	{
 		MousePrsEvent ee = e;
-		opcode |= ele->onMousePrs(ee);
-		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
+		isHandled = (*ele)->onMousePrs(ee);
+		if ((*ele)->pendingUpdate() && (*ele)->getVisible())
+		{
+			isNeedUpdate = true;
+			frontRenderEle = std::next(ele.base(), -1);
+		}
+
+		if (isHandled)
+			break;
 	}
 
-	return true;// opcode;
+	// render from front Elements
+	for (auto ele2 = frontRenderEle; ele2 != elementsList.end(); ele2++)
+		canvas.renderWith((*ele2)->getCanvas());
+
+	return true;
 }
 
 bool Window::windowMouseRls(MouseRlsEvent e)
@@ -116,36 +147,89 @@ bool Window::windowMouseRls(MouseRlsEvent e)
 		return false;
 
 	// Elements
-	bool opcode = false;
-	for (auto& ele : elementsVec)
+	bool isHandled = false;
+	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
+	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
 	{
 		MouseRlsEvent ee = e;
-		opcode |= ele->onMouseRls(ee);
-		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
+		isHandled = (*ele)->onMouseRls(ee);
+		if ((*ele)->pendingUpdate() && (*ele)->getVisible())
+		{
+			isNeedUpdate = true;
+			frontRenderEle = std::next(ele.base(), -1);
+		}
+
+		if (isHandled)
+			break;
 	}
 
-	return true;// opcode;
+	// render from front Elements
+	for (auto ele2 = frontRenderEle; ele2 != elementsList.end(); ele2++)
+		canvas.renderWith((*ele2)->getCanvas());
+
+	return true;
 }
 
 bool Window::windowKeyPrs(KeyPrsEvent e)
 {
 	// Elements
-	bool opcode = false;
-	for (auto& ele : elementsVec)
+	bool isWindowHandled = false;
+	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
+	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
 	{
 		KeyPrsEvent ee = e;
-		opcode |= ele->onKeyPrs(ee);
-		if (ele->pendingUpdate() && ele->getVisible())
-			canvas.renderWith(ele->getCanvas()), isNeedUpdate = true;
+		isWindowHandled |= (*ele)->onKeyPrs(ee);
+		if ((*ele)->pendingUpdate() && (*ele)->getVisible())
+		{
+			isNeedUpdate = true;
+			frontRenderEle = std::next(ele.base(), -1);
+		}
 	}
 
-	return opcode;
+	// render from front Elements
+	for (auto ele2 = frontRenderEle; ele2 != elementsList.end(); ele2++)
+		canvas.renderWith((*ele2)->getCanvas());
+
+	return isWindowHandled;
+}
+
+void Window::zindex(unsigned int& ind, unsigned int& ele_zindex)
+{
+	// ind to ele_zindex ind
+	ele_zindex = max(min(ele_zindex, int(elementsList.size() - 1)), 0);
+
+	auto it = std::next(elementsList.begin(), ind);
+	auto rb = std::next(it);
+	auto re = std::next(elementsList.begin(), ele_zindex + (ind < ele_zindex));
+	elementsList.splice(it, elementsList, rb, re);
+}
+
+void Window::ajustZindex()
+{
+	unsigned int ind = 0; bool isAjustBack = false;
+	for (auto ele = elementsList.begin(); ele != elementsList.end();)
+	{
+		if (isAjustBack && !(*ele)->isForceZindex)
+			(*ele)->setZindex(ind);
+		else if ((*ele)->pollingZindex() && ind != (*ele)->zindex)
+		{
+			if ((*ele)->zindex > ind)
+				zindex(ind, (*ele)->zindex), ele = std::next(elementsList.begin(), ind);
+			else
+				zindex(ind, (*ele)->zindex);
+
+			isAjustBack = true;
+			continue;
+		}
+
+		ele++, ind++;
+	}
 }
 
 void Window::refresh()
 {
 	canvas.flush();
+
 	elementsUpdate(true);
 
 	canvas.frame();
@@ -154,7 +238,10 @@ void Window::refresh()
 
 bool Window::pollingUpdate()
 {
-	elementsUpdate();
+	if (isForcePollingRefresh)
+		refresh();
+	else
+		elementsUpdate();
 	
 	if (pollingCallback)
 		pollingCallback();
@@ -162,14 +249,24 @@ bool Window::pollingUpdate()
 	bool b = isNeedUpdate; isNeedUpdate = false;
 	return b;
 }
+
 void Window::elementsUpdate(bool forceUpdate)
 {
-	bool opcode = false;
-	for (auto&ele : elementsVec)
-	{
-		if (forceUpdate || (ele->onPollingUpdate() && ele->getVisible()))
-			canvas.renderWith(ele->getCanvas()), opcode |= true;		
-	}
+	isForcePollingRefresh = false;
+
+	// ajust zindex first
+	ajustZindex();
 	
-	isNeedUpdate |= opcode;
+	// pollingUpdate
+	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
+	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
+		if (((*ele)->onPollingUpdate(isForcePollingRefresh) && (*ele)->getVisible()) || forceUpdate)
+		{
+			isNeedUpdate = true;
+			frontRenderEle = std::next(ele.base(), -1);
+		}
+
+	// render from front Elements
+	for (auto ele2 = frontRenderEle; ele2 != elementsList.end(); ele2++)
+		canvas.renderWith((*ele2)->getCanvas());
 }

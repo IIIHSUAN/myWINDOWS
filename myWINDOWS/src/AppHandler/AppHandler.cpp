@@ -53,7 +53,6 @@ AppHandler::AppHandler()
 void AppHandler::run()
 {
 	createApp(AppCollection::Desktop);
-	createApp(AppCollection::Settings);
 
 	pollingThread = std::thread([this]() {try { pollingUpdate(); } catch (...) { return; } });
 	inputThread = std::thread([]() {	try { Input::get().run(); } catch (...) { return; }});
@@ -73,31 +72,31 @@ void AppHandler::createApp(AppCollection name)
 	case AppCollection::Unknown:
 		return;
 	case AppCollection::Desktop:
-		appVec.emplace_back(new Desktop(windowPos));
+		appList.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::Menu:
-		appVec.emplace_back(new Desktop(windowPos));
+		appList.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::WindowManager:
-		appVec.emplace_back(new Desktop(windowPos));
+		appList.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::Settings:
-		appVec.emplace_back(new Settings(windowPos));
+		appList.emplace_back(new Settings(windowPos));
 		break;
 	case AppCollection::Painter:
-		appVec.emplace_back(new Painter(windowPos));
+		appList.emplace_back(new Painter(windowPos));
 		break;
 	case AppCollection::MyPhoto:
-		appVec.emplace_back(new Desktop(windowPos));
+		appList.emplace_back(new Desktop(windowPos));
 		break;
 	case AppCollection::Chess:
-		appVec.emplace_back(new Chess(windowPos));
+		appList.emplace_back(new Chess(windowPos));
 		break;
 	}
 
-	runThreadVec.emplace_back(std::thread([this]() {
+	runThreadList.emplace_back(std::thread([this]() {
 		try {
-			appVec.at(appVec.size() - 1)->run();  // if need update UI, use PollingUpdate
+			appList.back()->run();  // if need update UI, use PollingUpdate
 		}
 		catch (...)
 		{
@@ -105,14 +104,14 @@ void AppHandler::createApp(AppCollection name)
 			return;
 		}
 	}));
-	runThreadVec.back().detach();
+	runThreadList.back().detach();
 }
 
 void AppHandler::shutdown()
 {
 	isRun = false;
 
-	if (!appVec.empty())
+	if (!appList.empty())
 		onEvent(ShutdownEvent());
 
 	return;
@@ -133,7 +132,7 @@ void AppHandler::pollingUpdate()
 	while (isRun)
 	{
 		isNeedUpdate = false;
-		for (auto* app : appVec)
+		for (auto* app : appList)
 			if (app->pollingUpdate())
 				isNeedUpdate = true;
 
@@ -155,8 +154,8 @@ void AppHandler::update(bool isFlush)
 	if (isFlush)
 		canvas.flush();
 
-	for (App* app : appVec)
-		for (auto& window : app->getWindowVec())
+	for (App* app : appList)
+		for (auto& window : app->getWindowList())
 			canvas.renderWindow(*window);
 
 	// msgThread
@@ -187,17 +186,19 @@ void AppHandler::update(bool isFlush)
 void AppHandler::onEvent(Event & e)  // from input
 {
 	if (e.getType() == EventType::shutdown)
-		for (auto& app : appVec)
+		for (auto& app : appList)
 			app->onEvent(e);
 
-
 	if (e.getType() != EventType::unknown)
-		for (auto app = appVec.rbegin(); app != appVec.rend();)
+		for (auto app = appList.rbegin(); app != appList.rend();)
 		{
 			if ((*app)->onEvent(e))
 			{
-				if (e.getType() == EventType::mousePrs && *appVec.rbegin() != *app)
-					std::swap(*appVec.rbegin(), *app);
+				if (e.getType() == EventType::mousePrs && *appList.rbegin() != *app)
+				{
+					auto it = std::next(appList.begin(), std::distance(appList.begin(), app.base()) - 1);
+					appList.splice(it, appList, std::next(it), appList.end());
+				}
 
 				break;
 			}
@@ -205,13 +206,13 @@ void AppHandler::onEvent(Event & e)  // from input
 			if (!(*app)->getIsRun())
 			{
 				delete (*app);
-				app = std::vector<App*>::reverse_iterator(appVec.erase(--app.base()));
+				app = std::list<App*>::reverse_iterator(appList.erase(--app.base()));
 			}
 			else
 				app++;
 		}
 
-	if (appVec.empty())
+	if (appList.empty())
 		shutdown();
 }
 

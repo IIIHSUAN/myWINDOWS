@@ -8,38 +8,47 @@ class SettingsWindow : public Window
 {
 public:
 	SettingsWindow(int _id, std::wstring _name, Pos _pos, Size _size) : Window(_id, _name, _pos, _size) {
-		PUSH_ELEMENTS(lFontSize, Label(L"Ajust Font Size: ", { 8,4 }, getSize()));
-		PUSH_ELEMENTS(iFontSize, Inputbox(std::to_wstring(Output::get().getFontSize()).c_str(), { 28,3 }, getSize(), 17, true));
-		iFontSize->onkey([](KeyPrsEvent& e, std::wstring& str) {
+		
+		/* font size ****************************************************************/
+
+		PUSH_ELEMENTS(lFontSize, Label(L"Ajust Font Size: ", { Left(8),Top(4) }, getPos(), getSize()));
+		PUSH_ELEMENTS(iFontSize, Inputbox((std::to_wstring(Output::get().getFontSize()) + L"px").c_str(), { Left(28),Top(3) }, 
+			getPos(), getSize(), 17, true));
+		iFontSize->onkey([this](KeyPrsEvent& e) {
 			if (e.getKey() == VK_RETURN)
 			{
 				try {
-					int fontsize = std::stoi(str);
-					Output::get().setFontSize(fontsize);
+					int fontsize = std::stoi(iFontSize->getString());
+					Output::get().setFontSize(fontsize), iFontSize->setString(std::to_wstring(fontsize) + L"px");
 					return true;
 				} catch (...) { return false; }
 			}
 			return false;
 		});
 
-		PUSH_ELEMENTS(lInputSync, Label(L"Input Sync: ", { 8,7 }, getSize()));
-		PUSH_ELEMENTS(bInputSync, Button(L" OFF ", { 28,6 }, getSize(), true, { 7,1 }));
-		bInputSync->onclick([this](Button& b) {
-			isInputSync = !isInputSync;
-			Input::get().setIsEventUpdate(isInputSync);
-			b.setString(isInputSync ? L"  ON  " : L" OFF ");
+		/* input async ****************************************************************/
+
+		PUSH_ELEMENTS(lInputAsync, Label(L"Input Async: ", { Left(8),Top(7) }, getPos(), getSize()));
+		PUSH_ELEMENTS(bInputAsync, Button(L" OFF ", { Left(28),Top(6) }, getPos(), getSize(), true, { 7,1 }));
+		bInputAsync->onclick([this]() {
+			isInputAsync = !isInputAsync;
+			Input::get().setIsEventUpdate(isInputAsync);
+			bInputAsync->setString(isInputAsync ? L"  ON  " : L" OFF ");
 			return true;
 		});
 
-		PUSH_ELEMENTS(lFps, Label(L"Set fps: ", { 8,10 }, getSize()));
-		PUSH_ELEMENTS(iFps, Inputbox(std::to_wstring(1.0f / AppHandler::get().getPollingPeriod()).c_str(), 
-			{ 28,9 }, getSize(), 17, true)
+		/* set fps ****************************************************************/
+
+		PUSH_ELEMENTS(lFps, Label(L"Set fps: ", { Left(8),Top(10) }, getPos(), getSize()));
+		PUSH_ELEMENTS(iFps, Inputbox((std::to_wstring(1.0f / AppHandler::get().getPollingPeriod()) + L"Hz").c_str(),{ Left(28),Top(9) }, 
+			getPos(), getSize(), 17, true)
 		);
-		iFps->onkey([](KeyPrsEvent& e, std::wstring& str) {
+		iFps->onkey([this](KeyPrsEvent& e) {
 			if (e.getKey() == VK_RETURN)
 			{
 				try {
-					int fps = std::stoi(str);
+					float fps = std::stof(iFps->getString());
+					fps = max(fps, 0.1f), iFps->setString(std::to_wstring(fps) + L"Hz");
 					AppHandler::get().setPollingPeriod(1.0f / fps);
 					return true;
 				}
@@ -48,18 +57,27 @@ public:
 			return false;
 		});
 
-		PUSH_ELEMENTS(p1, Paragraph(L"Hot key: set Sensitivity - ctrl & shift\n\nHot key: shut down - Esc",
-			{ 7,13 }, { 41,5 }, getSize())
+		/* screen & buffer size ****************************************************************/
+
+		PUSH_ELEMENTS(lwidth, Label(L"Set Screen Width: ", { Left(8),Top(13) }, getPos(), getSize()));
+		
+		PUSH_ELEMENTS(lheight, Label(L"Set Screen Height: ", { Left(8),Top(16) }, getPos(), getSize()));
+		
+
+		/* tips ****************************************************************/
+
+		PUSH_ELEMENTS(p1, Paragraph(L"[Hot key] set Sensitivity - ctrl & shift            \n          shut down - Esc", { Left(7),Top(19) }, 
+			{ 48,8 }, getPos(), getSize(), TextAlign::left, false, {3,2})
 		);
 	}
 
 private:
-	std::shared_ptr<Label> lFontSize, lInputSync, lFps;
-	std::shared_ptr<Inputbox> iFontSize, iFps;
-	std::shared_ptr<Button> bInputSync;
+	std::shared_ptr<Label> lFontSize, lInputAsync, lFps, lwidth, lheight;
+	std::shared_ptr<Inputbox> iFontSize, iFps, iwidth, iheight;
+	std::shared_ptr<Button> bInputAsync;
 	std::shared_ptr<Paragraph> p1;
 
-	bool isInputSync = false;
+	bool isInputAsync = false;
 };
 
 class Settings :public App

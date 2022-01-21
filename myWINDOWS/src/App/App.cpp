@@ -5,20 +5,20 @@ bool App::onEvent(Event & e)
 	if (e.getType() == EventType::shutdown)
 		isRun = false;
 
-	for (auto window = windowVec.rbegin(); window != windowVec.rend();)
+	for (auto window = windowList.rbegin(); window != windowList.rend();)
 	{
-		bool opcode = false;
+		bool ishandled = false;
 		if ((*window)->onEvent(e))  // is handled
-			opcode = true;
+			ishandled = true;
 
 		if (!(*window)->getIsRun())
 		{
-			window = std::vector<std::shared_ptr<Window>>::reverse_iterator(windowVec.erase(--window.base()));
+			window = std::list<std::shared_ptr<Window>>::reverse_iterator(windowList.erase(--window.base()));
 
-			if (windowVec.empty())  // no window exists
+			if (windowList.empty())  // no window exists
 				isRun = false;
 		}
-		else if (opcode)
+		else if (ishandled)
 			return true;
 		else
 			window++;
@@ -30,7 +30,7 @@ bool App::onEvent(Event & e)
 bool App::pollingUpdate()
 {
 	bool b = isNeedUpdate;
-	for (auto&window : windowVec)
+	for (auto&window : windowList)
 		b |= (*window).pollingUpdate();
 
 	isNeedUpdate = false;

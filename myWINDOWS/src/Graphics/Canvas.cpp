@@ -22,6 +22,7 @@ void Canvas::line(int X, int Y, const wchar_t * str, const int len)  // draw in 
 	static int x, w;
 	x = X < 0 ? 0 : X;
 	w = X + len > MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : len;
+
 	canvas.replace(index(Y, x), w, str, 0, w);
 }
 
@@ -43,13 +44,13 @@ void Canvas::line(int X, int Y, std::wstring s)  // draw in one line
 
 	static int x, w;
 	x = X < 0 ? 0 : X;
-	w = X + s.length() > MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : s.length();
+	w = X + s.length() > MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : int(s.length());
 	canvas.replace(index(Y, x), w, s, 0, w);
 }
 
 void Canvas::lineCenter(int X, int Y, std::wstring& str)
 {
-	line(X - str.length() / 2, Y, str.c_str(), str.length());
+	line(X - int(str.length() / 2), Y, str.c_str(), int(str.length()));
 }
 
 void Canvas::renderWith(Canvas & front)
@@ -57,7 +58,10 @@ void Canvas::renderWith(Canvas & front)
 	static int x, y, w, h, mx, my;
 	x = front.pos.x, y = front.pos.y;
 	w = min(front.size.width, size.width - x - 1), h = min(front.size.height, size.height - y - 1);
-	mx = min(0, x), my = min(0, y);  // if in negative plane
+	mx = min(0, x - isFrame), my = min(0, y - isFrame);  // if in negative plane
+
+	if (w + mx < 0)
+		return;
 
 	for (int i = -my; i < h && w>0; i++)
 		canvas.replace(index(i + y, x) - mx, w + mx, front.getCanvas(), i*MY_WINDOW_WIDTH - mx, w + mx);
@@ -91,12 +95,29 @@ void Canvas::setCharImage(CharImage & src)
 		);
 }
 
-void Canvas::setPos4(Pos4 pos4)
+void Canvas::setPos4h()  // to-do: min(), max(), clamp(), calc()
 {
-	pos.x = pos4.right > pos4.left ? ((pos4.position == Position::relative ? parentSize.width - size.width : originParentSize.width - size.width) - pos4.right) :
-		pos4.left;
-	pos.y = pos4.bottom > pos4.top ? ((pos4.position == Position::relative ? parentSize.height - size.height : originParentSize.height - size.height) - pos4.bottom) :
-		pos4.top;
+	int value =
+		pos4.hAttr.unit == vw ? int(pos4.hAttr.value * parentSize.width / 100.0f) :
+		pos4.hAttr.unit == vh ? int(pos4.hAttr.value * parentSize.height / 100.0f) :
+		pos4.hAttr.value;
+
+	if (pos4.hAttr.dir == Dir::right)
+		pos.x = (pos4.hAttr.position == Position::relative ? parentSize.width - size.width : originParentSize.width - size.width) - value;
+	else
+		pos.x = (pos4.hAttr.position == Position::relative ? 0 : originParentPos.x - parentPos.x) + value;
+}
+void Canvas::setPos4v()
+{
+	int value =
+		pos4.vAttr.unit == vw ? int(pos4.vAttr.value * parentSize.width / 100.0f) :
+		pos4.vAttr.unit == vh ? int(pos4.vAttr.value * parentSize.height / 100.0f) :
+		pos4.vAttr.value;
+
+	if (pos4.vAttr.dir == Dir::bottom)
+		pos.y = (pos4.vAttr.position == Position::relative ? parentSize.height - size.height : originParentSize.height - size.height) - value;
+	else
+		pos.y = (pos4.vAttr.position == Position::relative ? 0 : originParentPos.y - parentPos.y) + value;
 }
 
 void Canvas::frame()
@@ -107,6 +128,6 @@ void Canvas::frame()
 			if (i == 0 || i == size.height - 1)  // top & bottom frame
 				canvas.replace(index(i, 0), size.width, size.width, L'\u2550');
 			canvas.at(index(i, 0)) = (i == 0 ? L'\u2554' : (i == size.height - 1) ? L'\u255A' : L'\u2551');  // left
-			canvas.at(index(i, size.width - 1)) = (i == 0 ? L'\u2557' : (i == size.height - 1) ? L'\u255DE' : L'\u2551');  // right
+			canvas.at(index(i, size.width - 1)) = (i == 0 ? L'\u2557' : (i == size.height - 1) ? L'\u255D' : L'\u2551');  // right
 		}
 }

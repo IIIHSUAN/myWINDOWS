@@ -21,7 +21,7 @@ public:
 
 	void run();  // entry point
 
-	inline std::vector<App*>& getAppVec() { return appVec; }
+	inline std::list<App*>& getAppList() { return appList; }
 	void createApp(AppCollection name);
 
 	unsigned int isMsg = 0;
@@ -35,18 +35,18 @@ public:
 private:
 	static AppHandler* appHandler;
 	std::thread pollingThread, inputThread, msgThread;
-	std::vector<std::thread> runThreadVec;
+	std::list<std::thread> runThreadList;
 	bool isRun = true;
 
 	std::wstring msgStr;
 	Canvas msgCanvas = Canvas({ MY_WINDOW_WIDTH / 2 - 20, MY_WINDOW_HEIGHT / 2 - 4 }, { 40,8 }, false, L'\u25A2');
 	bool isMsgRun = false;
 
-	float pollingPeriod = 0.03f;  //sec
+	float pollingPeriod = 0.025f;  //sec
 	void pollingUpdate();
-	std::vector<App*> appVec;
+	std::list<App*> appList;
 	void update(bool isFlush = true);
-	Canvas canvas = Canvas({ 0,0 }, { MY_WINDOW_WIDTH,MY_WINDOW_HEIGHT }, false, L'◦');
+	Canvas canvas = Canvas({ 0,0 }, { MY_WINDOW_WIDTH,MY_WINDOW_HEIGHT }, false, L' ');
 
 	std::function<void(Event&)> eventCallback;  // carry different events out
 	void onEvent(Event& e);
