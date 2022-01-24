@@ -1,9 +1,11 @@
 ﻿#include "Elements.h"
 
+#include <System/System.h>
+
 #include <Windows.h>
 #include <thread>
 
-#include <AppHandler/AppHandler.h>
+/* Elements ****************************************************/
 
 void Elements::flush_impl(wchar_t flushChar)
 {
@@ -15,22 +17,22 @@ void Elements::flush_impl(wchar_t flushChar)
 
 bool Elements::_onMouseMove(MouseMoveEvent & e)
 {
-	Pos& pos = canvas.getPos();
-	Size& size = canvas.getSize();
+	Pos pos = canvas.getPos();
+	Size size = canvas.getSize();
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 
 	bool isCallback = false;
-	if (e.getMouseX() >= 0 && e.getMouseX() < size.width&&e.getMouseY() >= 0 && e.getMouseY() < size.height)
-		info.mouseHover = InfoType::Active, isCallback = true;
-	else if (info.mouseHover == InfoType::Active)
-		info.mouseHover = InfoType::Cancel, isCallback = true;
-	else if (info.mouseHover == InfoType::Cancel)
-		info.mouseHover = InfoType::None;
+	if (e.getMouseX() >= 0 && e.getMouseX() < size.width && e.getMouseY() >= 0 && e.getMouseY() < size.height)
+		info.mouseHover = ElementsInfo::active, isCallback = true;
+	else if (info.mouseHover == ElementsInfo::active)
+		info.mouseHover = ElementsInfo::cancel, isCallback = true;
+	else if (info.mouseHover == ElementsInfo::cancel)
+		info.mouseHover = ElementsInfo::none;
 
-	if (info.mouseClick == InfoType::Active)
-		info.mouseClick = InfoType::Cancel, isCallback = true;
-	else if (info.mouseClick == InfoType::Cancel)
-		info.mouseClick = InfoType::None;
+	if (info.mouseClick == ElementsInfo::active)
+		info.mouseClick = ElementsInfo::cancel, isCallback = true;
+	else if (info.mouseClick == ElementsInfo::cancel)
+		info.mouseClick = ElementsInfo::none;
 
 	return isCallback;
 }
@@ -42,8 +44,8 @@ bool Elements::_onMousePrs(MousePrsEvent & e)
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 
 	bool isCallback = false;
-	if (e.getMouseX() >= 0 && e.getMouseX() < size.width&&e.getMouseY() >= 0 && e.getMouseY() < size.height)
-		info.mousePressed = InfoType::Active, isCallback = true;
+	if (e.getMouseX() >= 0 && e.getMouseX() < size.width && e.getMouseY() >= 0 && e.getMouseY() < size.height)
+		info.mousePressed = ElementsInfo::active, isCallback = true;
 
 	return isCallback;
 }
@@ -56,77 +58,118 @@ bool Elements::_onMouseRls(MouseRlsEvent & e)
 
 	bool isCallback = false;
 	if (e.getMouseX() >= 0 && e.getMouseX() < size.width&&e.getMouseY() >= 0 && e.getMouseY() < size.height
-		&& info.mousePressed == InfoType::Active)
-		info.mouseClick = InfoType::Active, isCallback = true;
+		&& info.mousePressed == ElementsInfo::active)
+		info.mouseClick = ElementsInfo::active, isCallback = true;
 
-	if (info.mousePressed == InfoType::Active)
-		info.mousePressed = InfoType::Cancel, isCallback = true;
-	else if (info.mousePressed == InfoType::Cancel)
-		info.mousePressed = InfoType::None;
+	if (info.mousePressed == ElementsInfo::active)
+		info.mousePressed = ElementsInfo::cancel, isCallback = true;
+	else if (info.mousePressed == ElementsInfo::cancel)
+		info.mousePressed = ElementsInfo::none;
 
 	return isCallback;
+}
+
+void Elements::_onWindowResize(WindowResizeEvent & e)
+{
+	if (animFunc)
+	{
+		// size
+		anim.startSize.width = canvas.convertSize2width(anim.startSize2, parent), anim.startSize.height = canvas.convertSize2height(anim.startSize2, parent);
+		anim.endSize.width = canvas.convertSize2width(anim.endSize2, parent), anim.endSize.height = canvas.convertSize2height(anim.endSize2, parent);
+		// pos
+		anim.startPos.x = canvas.convertPos4h(anim.startPos4, parent), anim.startPos.y = canvas.convertPos4v(anim.startPos4, parent);
+		anim.endPos.x = canvas.convertPos4h(anim.endPos4, parent), anim.endPos.y = canvas.convertPos4v(anim.endPos4, parent);
+	}
+	else
+		setSize2(canvas.getSize2()), setPos4(canvas.getPos4());
 }
 
 bool Elements::onPollingUpdate(bool& isForceWindowRefresh)
 {
 	bool b = isNeedUpdate;
 	if (pollingCallback) b |= pollingCallback();
-	if(animFunc) animFunc(isAnimInit), isForceWindowRefresh |= true;
+	if (animFunc && anim.status == Animate::play && animFunc()) 
+		onMouseMove(MouseMoveEvent(Mouse::get().X, Mouse::get().Y, Mouse::get().X, Mouse::get().Y,false)),  // virtual MouseMoveEvent
+		isForceWindowRefresh |= true;
 	if (animCallback) animCallback(), animCallback = nullptr;
 	isNeedUpdate = false; return b;
 }
 
-void Elements::animate(Animate animAttr, std::function<void()> completeCallback)
+void Elements::animate(Animate _anim, std::function<void()> callback)
 {
-	float dx, dy, dw, dh, dt = AppHandler::get().getPollingPeriod(),
-		xx = float(canvas.getPos().x), yy = float(canvas.getPos().y), ww = float(canvas.getSize().width), hh = float(canvas.getSize().height), tt = 0.0f;
+	float sleepTime = anim.sleepTime;
+	anim = _anim;
+	anim.sleepTime = sleepTime;
+	anim.dt = System::get().getPollingPeriod();
+	// size
+	anim.startSize2 = canvas.getSize2();
+	anim.startSize.width = canvas.convertSize2width(anim.startSize2, parent), anim.startSize.height = canvas.convertSize2height(anim.startSize2, parent);
+	anim.endSize.width = canvas.convertSize2width(anim.endSize2, parent), anim.endSize.height = canvas.convertSize2height(anim.endSize2, parent);
+	// pos
+	anim.startPos4 = canvas.getPos4();
+	anim.startPos.x = canvas.convertPos4h(anim.startPos4, parent), anim.startPos.y = canvas.convertPos4v(anim.startPos4, parent);
+	anim.endPos.x = canvas.convertPos4h(anim.endPos4, parent), anim.endPos.y = canvas.convertPos4v(anim.endPos4, parent);
+	anim.callback = callback;
 
-	if (animAttr.isPosAnim)
-		dx = (animAttr.toPos.x - xx)* dt / animAttr.duration,
-		dy = (animAttr.toPos.y - yy)* dt / animAttr.duration;
-
-	if (animAttr.isSizeAnim)
-		dw = (animAttr.toSize.width - ww)* dt / animAttr.duration,
-		dh = (animAttr.toSize.height - hh)* dt / animAttr.duration;
-
-	isAnimInit = false;
-
-	animFunc = [animAttr, dx, dy, dw, dh, dt, xx, yy, ww, hh, tt, completeCallback, this](bool& isInit) {
-
-		static float x, y, w, h, t;	static Pos lastPos;	static Size lastSize;
-		if (!isInit)
-			x = xx, y = yy, w = ww, h = hh, t = tt, lastPos = canvas.getPos(), lastSize = canvas.getSize(), isInit = true;
-
-		t += dt;
-		bool opcode = false;
-
-		if (t < animAttr.duration)
+	animFunc = [this]() {
+		if (anim.sleepTime > 0)
 		{
-			if (animAttr.isPosAnim)
-			{
-				x += dx, y += dy;
+			anim.sleepTime -= anim.dt;
+			return false;
+		}
 
-				if (lastPos.x != int(x) || lastPos.y != int(y))
+		bool opcode = false;
+		
+		anim.time += anim.dt;
+		float ratio = anim.easingFunc ? anim.easingFunc(anim.time / anim.duration) : anim.time / anim.duration;
+
+		if (anim.time < anim.duration - anim.dt)
+		{
+
+			if (anim.isSizeAnim)
+			{
+				anim.w = anim.startSize.width * (1 - ratio) + anim.endSize.width * ratio;
+				anim.h = anim.startSize.height * (1 - ratio) + anim.endSize.height * ratio;
+
+				if (anim.lastSize.width != int(anim.w) || anim.lastSize.height != int(anim.h))
 				{
-					canvas.setPos({ int(x),int(y) }), lastPos = canvas.getPos();
+					setSize2({ int(anim.w),int(anim.h) });
+
+					if (anim.isPosAnim)
+					{
+						anim.startPos.x = canvas.convertPos4h(anim.startPos4, parent), anim.startPos.y = canvas.convertPos4v(anim.startPos4, parent);
+						anim.endPos.x = canvas.convertPos4h(anim.endPos4, parent), anim.endPos.y = canvas.convertPos4v(anim.endPos4, parent);
+					}
+
+					anim.lastSize.width = int(anim.w), anim.lastSize.height = int(anim.h);
 					opcode |= true;
 				}
 			}
 
-			if (animAttr.isSizeAnim)
+			if (anim.isPosAnim)
 			{
-				w += dw, h += dh;
+				anim.x = anim.startPos.x * (1 - ratio) + anim.endPos.x * ratio;
+				anim.y = anim.startPos.y * (1 - ratio) + anim.endPos.y * ratio;
 
-				if (lastSize.width != int(x) || lastSize.height != int(y))
+				if (anim.lastPos.x != int(anim.x) || anim.lastPos.y != int(anim.y))
 				{
-					canvas.setSize({ int(w),int(h) }), lastSize = canvas.getSize();
+					if (!anim.isSetCanvasPos4)
+						setPos4({ Left(int(anim.x)),Top(int(anim.y)) }), anim.isSetCanvasPos4 = true;
+					else
+						canvas.setPos4hValue(int(anim.x), parent), canvas.setPos4vValue(int(anim.y), parent);
+
+					anim.lastPos.x = int(anim.x), anim.lastPos.y = int(anim.y);
 					opcode |= true;
 				}
 			}
 		}
-		else
+		else  // return 
 		{
-			if (completeCallback) setAnimCallback(completeCallback);
+			if (anim.isSizeAnim) setSize2(anim.endSize2);
+			if (anim.isPosAnim)	setPos4(anim.endPos4);
+			opcode |= true;
+
+			if (anim.callback) setAnimCallback(anim.callback);
 			animFunc = nullptr;
 		}
 
@@ -136,10 +179,11 @@ void Elements::animate(Animate animAttr, std::function<void()> completeCallback)
 
 /* Label ****************************************************/
 
-Label::Label(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize) :str(cstr), Elements(ElementsType::Button)
+Label::Label(const wchar_t * cstr, Pos4 pos4, Window& window) 
+	: str(cstr), Elements(ElementsType::Button, window.getCanvas())
 {
 	// set values
-	canvas = Canvas(pos4, { int(str.length()),1 }, parentPos, parentSize);
+	canvas = Canvas(pos4, { int(str.length()),1 }, parent);
 
 	// update canvas
 	Elements::flush();
@@ -147,10 +191,11 @@ Label::Label(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& 
 
 /* Button ****************************************************/
 
-Button::Button(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize, bool isFrame, Size padding) :str(cstr), Elements(ElementsType::Button)
+Button::Button(const wchar_t * cstr, Pos4 pos4, Window& window, bool isFrame, Size padding)
+	: str(cstr), Elements(ElementsType::Button, window.getCanvas())
 {
 	// set values
-	canvas = Canvas(pos4, { int(str.length() + padding.width * 2),padding.height * 2 + 1 }, parentPos, parentSize, isFrame, L'╳');
+	canvas = Canvas(pos4, { int(str.length() + padding.width * 2),padding.height * 2 + 1 }, parent, isFrame, L'╳');
 
 	// update canvas
 	Elements::flush();
@@ -165,7 +210,7 @@ void Button::flush_impl(wchar_t flushChar)
 
 bool Button::onMouseMove_impl(MouseMoveEvent & e)
 {
-	if (info.mouseHover == InfoType::Active)
+	if (info.mouseHover == ElementsInfo::active)
 		Elements::flush(L'╬');
 	else
 		Elements::flush();
@@ -179,7 +224,7 @@ bool Button::onMouseMove_impl(MouseMoveEvent & e)
 
 bool Button::onMousePrs_impl(MousePrsEvent & e)
 {
-	if (info.mousePressed == InfoType::Active)
+	if (info.mousePressed == ElementsInfo::active)
 		Elements::flush(L'|');
 
 	return false;
@@ -188,20 +233,21 @@ bool Button::onMousePrs_impl(MousePrsEvent & e)
 bool Button::onMouseRls_impl(MouseRlsEvent & e)
 {
 	bool opcode = false;
-	if (info.mousePressed == InfoType::Cancel)
+	if (info.mousePressed == ElementsInfo::cancel)
 		Elements::flush();
 
-	if (info.mouseClick == InfoType::Active && mouseClkCallback)
+	if (info.mouseClick == ElementsInfo::active && mouseClkCallback)
 		opcode |= mouseClkCallback();
 	return opcode;
 }
 
 /* Inputbox ****************************************************/
 
-Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, const Pos& parentPos, const Size& parentSize, int len, bool isFrame) :str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox)
+Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, Window& window, int len, bool isFrame) 
+	:str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox, window.getCanvas())
 {
 	// set values
-	canvas = Canvas(pos4, { len + 2,3 }, parentPos, parentSize, isFrame, L' ');
+	canvas = Canvas(pos4, { len + 2,3 }, parent, isFrame, L' ');
 
 	// update canvas
 	flush();
@@ -225,16 +271,15 @@ void Inputbox::flush_impl(wchar_t flushChar)
 {
 	flushChar ? canvas.flush(flushChar) : canvas.flush();
 
-
 	std::wstring cstr = L"  " + str;
-	canvas.line(1, 1, cstr.c_str(), int(cstr.length()));
+	canvas.line(1, 1, cstr.c_str(), min(int(cstr.length()), len-2));
 }
 
 bool Inputbox::onMouseMove_impl(MouseMoveEvent & e)
 {
-	if (info.mouseHover == InfoType::Active && !isFlash)
+	if (info.mouseHover == ElementsInfo::active && !isFlash)
 		isFlash = true,	isWhite = false;
-	else if (info.mouseHover == InfoType::Cancel)
+	else if (info.mouseHover == ElementsInfo::cancel)
 	{
 		if(isFlash)
 			isFlash = false;
@@ -249,7 +294,7 @@ bool Inputbox::onMouseMove_impl(MouseMoveEvent & e)
 
 bool Inputbox::onMouseRls_impl(MouseRlsEvent & e)
 {
-	if (info.mouseClick == InfoType::Active)
+	if (info.mouseClick == ElementsInfo::active)
 		originStr = str, setString(L""), isFocus = true;
 
 	return false;
@@ -262,12 +307,12 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 	{
 		isFlash = false;
 
-		if(e.getKey() == VK_RETURN)
+		if(e.getKey() == KeySet::enter)
 			originStr = str;
-		else if (e.getKey() == VK_BACK)
+		else if (e.getKey() == KeySet::backspace)
 			str = str.substr(0, str.length() - 1);
 		else
-			str += e.getKey();
+			str += e.getChar();
 		flush();
 
 		if(keyPrsCallback)
@@ -279,10 +324,10 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 
 /* Image ****************************************************/
 
-Image::Image(CharImage charImage, const Pos& parentPos, const Size& parentSize, bool isFrame) :charImage(charImage), Elements(ElementsType::Image)
+Image::Image(CharImage charImage, Window& window, bool isFrame) :charImage(charImage), Elements(ElementsType::Image, window.getCanvas())
 {
 	// set values
-	canvas = Canvas(charImage.pos4, charImage.size, parentPos, parentSize, isFrame);
+	canvas = Canvas(charImage.pos4, { charImage.size.width - 1,charImage.size.height }, parent, isFrame);
 
 	// update canvas
 	Elements::flush();
@@ -290,12 +335,12 @@ Image::Image(CharImage charImage, const Pos& parentPos, const Size& parentSize, 
 
 /* Paragraph ****************************************************/
 
-Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size size, const Pos& parentPos, const Size & parentSize,
+Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size2 size2, Window& window,
 	TextAlign textAlign, bool isFrame, Size padding, wchar_t flushChar)
-	: str(cstr), textAlign(textAlign), padding(padding), Elements(ElementsType::Paragraph)
+	: str(cstr), textAlign(textAlign), padding(padding), Elements(ElementsType::Paragraph, window.getCanvas())
 {
 	// set values
-	canvas = Canvas(pos4, size, parentPos, parentSize, isFrame, flushChar);
+	canvas = Canvas(pos4, size2, parent, isFrame, flushChar);
 
 	// update canvas
 	Elements::flush();

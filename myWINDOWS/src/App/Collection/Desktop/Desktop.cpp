@@ -2,16 +2,81 @@
 
 #include <Windows.h>
 
-#include "AppHandler/AppHandler.h"
+#include "System/System.h"
 
-#define DESKTOP_CALLBACK(eleClass, eleName, code) ELEMENTS_CALLBACK(Desktop, desktop, DesktopWindow, window, eleClass, eleName, code)
+void DesktopWindow::b()
+{
+	bSettings->setZindex(FRONT(0));
+
+	bSettings->animate(Animate({ Left(50,vw),Top(50,vh) }, { Width(50,vw),Height(50,vh) }, 500, Easing::easeOutQuad), [this]() {
+		bSettings->setZindex(FRONT(3));
+		//bSettings->getAnimate().sleep(500);
+
+		bSettings->animate(Animate({ Right(50,vw),Bottom(50,vh) }, { Width(50,vw),Height(50,vh) }, 500, Easing::easeInQuad), [this]() {
+			//bSettings->getAnimate().sleep(500);
+
+			b();
+			//bSettings->getAnimate().sleep(500);
+			lTime->toggleAnimateStatus();
+			//bSettings->getAnimate().sleep(500);
+		});
+	});
+}
 
 DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 	: Window(_id, _name, _pos, _size, L'░')
 {
-	PUSH_ELEMENTS(iBackground, Image(CharImage({ backgroundData , {Left(15,vw,relative),Bottom(1,px,relative)}, {36,11} }), getPos(), getSize()));
+	/* Elements ************************************************************/
 
-	PUSH_ELEMENTS(lTime, Label(L"  Time  ", { Left(10,vh,absolute),Top(10,vw,absolute) }, getPos(), getSize()));
+	push_elements(iDoge, Image(CharImage({ backgroundData , {Left(15,vw),Bottom(1,px)}, {33,11} }),  *this));
+
+	push_elements(lTime, Label(L"Time", { Left(10,vh),Top(8,px) },  *this));
+	lTime->animate(Animate({ Left(15),Bottom(1) }, 500), [this]() {
+		a();
+	});
+	lTime->toggleAnimateStatus();
+
+	push_elements(bSettings, Button(L"Settings", { Left(1,px,absolute),Bottom(10,vh,absolute) }, *this, true));
+	bSettings->onclick([this]() {
+		System::get().createApp(AppCollection::Settings);
+		return true;
+	});
+	b();
+	bSettings->onhover([this]() {
+		if (bSettings->getInfo().mouseHover == ElementsInfo::active) bSettings->setString(L" Set Parameters ", L'#'); else bSettings->setString(L"Settings");
+		return true;
+	});
+
+
+	push_elements(bPainter, Button(L"Painter", { Right(3),Top(25,vh) },  *this, true));
+	bPainter->onhover([this]() {
+		bPainter->setString(bPainter->getInfo().mouseHover == ElementsInfo::active ? L"Open Painter ?" : L"Painter");
+		return false;
+	});
+	bPainter->onclick([]() {
+		System::get().createApp(AppCollection::Painter);
+		return true;
+	});
+
+	push_elements(bChess, Button(L"Chess", { Right(3),Top(50,vh) },  *this, true));
+	bChess->onhover([this]() {
+		if (bChess->getInfo().mouseHover == ElementsInfo::active) bChess->setString(L"Play ?", L'|'); else bChess->setString(L"Chess");
+		return false;
+	});
+	bChess->onclick([]() {
+		System::get().createApp(AppCollection::Chess);
+		return true;
+	});
+
+	push_elements(bAnimate, Button(L"  Animate  ", { Left(5,px,relative),Bottom(4,px,relative) },  *this, false, {3,1}));
+	bAnimate->onclick([this]() {
+		lTime->toggleAnimateStatus();
+		bSettings->toggleAnimateStatus();
+		return true;
+	});
+
+	/* Window pollingCallback ************************************************************/
+
 	setPollingCallback([this]() {
 		static int i = 0;
 		i = ++i % int(MY_UPDATE_FREQ);
@@ -28,53 +93,15 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 
 		lTime->setString(str);
 	});
+}
 
-	PUSH_ELEMENTS(bSettings, Button(L"  Settings  ", { Right(3,px,relative),Bottom(2,px,relative) }, getPos(), getSize(), true));
-	bSettings->onclick([this]() {
-		AppHandler::get().createApp(AppCollection::Settings);
-		return true;
-	});
-
-	PUSH_ELEMENTS(bPainter, Button(L"  Painter   ", { Right(3,px,relative),Bottom(8,px,relative) }, getPos(), getSize(), true));
-	bPainter->onhover([this]() {
-		if (bPainter->getInfo().mouseHover == InfoType::Active)
-			bPainter->setString(L"Open Painter ?", L'|');
-		else
-			bPainter->setString(L"  Painter   ");
-		return false;
-	});
-	bPainter->onclick([]() {
-		AppHandler::get().createApp(AppCollection::Painter);
-		return true;
-	});
-
-	PUSH_ELEMENTS(bChess, Button(L"   Chess    ", { Right(3,px,relative),Bottom(14,px,relative) }, getPos(), getSize(), true));
-	bChess->onhover([this]() {
-
-		if (bChess->getInfo().mouseHover == InfoType::Active)
-			bChess->setString(L"Play ?", L'|');
-		else
-			bChess->setString(L"   Chess    ");
-		return false;
-	});
-	bChess->onclick([]() {
-		AppHandler::get().createApp(AppCollection::Chess);
-		return true;
-	});
-
-	PUSH_ELEMENTS(bAnimate, Button(L"  Animate  ", { Left(5,px,relative),Bottom(4,px,relative) }, getPos(), getSize(), false, {3,1}));
-	bAnimate->onclick([this]() {
-
-		lTime->setZindex(FRONT(0));
-		lTime->animate(Animate(Pos({ 20,8 }), 0.5f), [this]() {
-			lTime->animate(Animate(Pos({ 4,2 }), 0.2f), [this]() {
-				lTime->animate(Animate(Pos({ 10,25 }), 0.5f), [this]() {
-					lTime->animate(Animate(Pos({ 5,5 }), 1.0f));
-				});
-			});
+void DesktopWindow::a()
+{
+	lTime->animate(Animate({ Left(20,vw,relative),Bottom(5,px,absolute) }, 500), [this]() {
+		lTime->setZindex(1);
+		lTime->animate(Animate({ Left(10,vw,relative),Bottom(50,vh,relative) }, 500), [this]() {
+			lTime->setZindex(FRONT(0));
+			a();
 		});
-		return true;
 	});
-	
-	Window::refresh();
 }

@@ -66,7 +66,22 @@ void Canvas::renderWith(Canvas & front)
 	for (int i = -my; i < h && w>0; i++)
 		canvas.replace(index(i + y, x) - mx, w + mx, front.getCanvas(), i*MY_WINDOW_WIDTH - mx, w + mx);
 }
+void Canvas::renderCharImage(CharImage & src)
+{
+	static int x, y, w, h;
+	x = x < 0 ? 0 : (x > size.width ? size.width : x);
+	y = y < 0 ? 0 : (y > size.height ? size.height : y);
 
+	w = x + src.size.width > size.width ? size.width - x : src.size.width;
+	h = y + src.size.height > size.height ? size.height - y : src.size.height;
+
+	for (int i = 0; i < h; i++)
+		canvas.replace(
+			index(i + y, x), w,
+			src.data,
+			i*(src.size.width - 1), w
+		);
+}
 void Canvas::renderWindow(Window& window)  // with custom size
 {
 	static int x, y, w, h, mx, my;
@@ -78,46 +93,47 @@ void Canvas::renderWindow(Window& window)  // with custom size
 	for (int i = -my; i < h && w>0; i++)
 		canvas.replace(index(i + y, x) - mx, w + mx, window.getCanvas().canvas, i*MY_WINDOW_WIDTH - mx, w + mx);
 }
-void Canvas::setCharImage(CharImage & src)
-{
-	static int x, y, w, h;
-	x = x < 0 ? 0 : (x > size.width ? size.width : x);
-	y = y < 0 ? 0 : (y > size.height ? size.height : y);
 
-	w = x + src.size.width > size.width ? size.width - x : src.size.width;
-	h = y + src.size.height > size.height ? size.height - y : src.size.height;
-
-	for (int i = 0; i < h; i++)
-		canvas.replace(
-			index(i + y, x), w - 1,
-			src.data,
-			i*src.size.width - i, w - 1
-		);
-}
-
-void Canvas::setPos4h()  // to-do: min(), max(), clamp(), calc()
+int Canvas::convertPos4h(const Pos4 & pos4, Canvas& parent)
 {
 	int value =
-		pos4.hAttr.unit == vw ? int(pos4.hAttr.value * parentSize.width / 100.0f) :
-		pos4.hAttr.unit == vh ? int(pos4.hAttr.value * parentSize.height / 100.0f) :
+		pos4.hAttr.unit == vw ? int(pos4.hAttr.value * parent.size.width / 100.0f) :
+		pos4.hAttr.unit == vh ? int(pos4.hAttr.value * parent.size.height / 100.0f) :
 		pos4.hAttr.value;
 
 	if (pos4.hAttr.dir == Dir::right)
-		pos.x = (pos4.hAttr.position == Position::relative ? parentSize.width - size.width : originParentSize.width - size.width) - value;
+		return (pos4.hAttr.position == Position::relative ? parent.size.width : parent.originPos.x - parent.pos.x + parent.originSize.width)
+		- size.width - value;
 	else
-		pos.x = (pos4.hAttr.position == Position::relative ? 0 : originParentPos.x - parentPos.x) + value;
+		return (pos4.hAttr.position == Position::relative ? 0 : parent.originPos.x - parent.pos.x) + value;
 }
-void Canvas::setPos4v()
+
+int Canvas::convertPos4v(const Pos4 & pos4, Canvas& parent)
 {
 	int value =
-		pos4.vAttr.unit == vw ? int(pos4.vAttr.value * parentSize.width / 100.0f) :
-		pos4.vAttr.unit == vh ? int(pos4.vAttr.value * parentSize.height / 100.0f) :
+		pos4.vAttr.unit == vw ? int(pos4.vAttr.value * parent.size.width / 100.0f) :
+		pos4.vAttr.unit == vh ? int(pos4.vAttr.value * parent.size.height / 100.0f) :
 		pos4.vAttr.value;
 
 	if (pos4.vAttr.dir == Dir::bottom)
-		pos.y = (pos4.vAttr.position == Position::relative ? parentSize.height - size.height : originParentSize.height - size.height) - value;
+		return (pos4.vAttr.position == Position::relative ? parent.size.height : parent.originPos.y - parent.pos.y + parent.originSize.height) 
+		- size.height - value;
 	else
-		pos.y = (pos4.vAttr.position == Position::relative ? 0 : originParentPos.y - parentPos.y) + value;
+		return (pos4.vAttr.position == Position::relative ? 0 : parent.originPos.y - parent.pos.y) + value;
+}
+
+int Canvas::convertSize2width(const Size2 & size2, Canvas& parent)
+{
+	return size2.width.unit == vw ? int(size2.width.value * parent.size.width / 100.0f) :
+		size2.width.unit == vh ? int(size2.width.value * parent.size.height / 100.0f) :
+		size2.width.value;
+}
+
+int Canvas::convertSize2height(const Size2 & size2, Canvas& parent)
+{
+	return size2.height.unit == vw ? int(size2.height.value * parent.size.height / 100.0f) :
+		size2.height.unit == vh ? int(size2.height.value * parent.size.height / 100.0f) :
+		size2.height.value;
 }
 
 void Canvas::frame()

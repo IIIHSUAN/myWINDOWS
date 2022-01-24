@@ -15,7 +15,7 @@ class Painter :public App
 {
 public:
 	Painter(Pos pos = { 2,1 }) : App(AppCollection::Painter) {
-		PUSH_WINDOW(window, PainterWindow(0, L"Painter", pos, { 40,MY_WINDOW_HEIGHT - 10 }));
+		push_window(window, PainterWindow(0, L"Painter", pos, { 40,MY_WINDOW_HEIGHT - 10 }));
 
 		window->setMouseMoveCallback([this](MouseMoveEvent& e) {
 			e.setPos({ e.getMouseX() - window->getX() , e.getMouseY() - window->getY() });

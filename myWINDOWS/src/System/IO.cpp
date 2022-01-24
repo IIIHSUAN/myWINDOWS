@@ -1,6 +1,6 @@
 #include "IO.h"
 
-#include "AppHandler.h"
+#include "System.h"
 
 /* Input *******************************************************/
 
@@ -17,7 +17,7 @@ void Input::run()
 	INPUT_RECORD InputRecord;
 	SetConsoleMode(inHandle, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT | ENABLE_PROCESSED_INPUT);
 	bool isFlush = false;
-	static AppHandler& appHandler = AppHandler::get();
+	static System& appHandler = System::get();
 	while (appHandler.isRun)
 	{
 		isFlush = false;

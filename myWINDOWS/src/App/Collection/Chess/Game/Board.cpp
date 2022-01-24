@@ -40,7 +40,7 @@ void Board::resetChess()
 
 	for (int i = 0; i < 8; i++)
 		for (int j = 0; j < 8; j++)
-			chessIdMap[i][j] = ChessId::None;
+			chessIdMap[i][j] = ChessId::none;
 	for (int id = 0; id < 32; id++)
 	{
 		Pos& pos = chessSet[id].getPos();
@@ -49,7 +49,7 @@ void Board::resetChess()
 		chessSet[id].setId(id);
 	}
 
-	selectId = ChessId::None, lastMoveId = ChessId::None;
+	selectId = ChessId::none, lastMoveId = ChessId::none;
 	selectPos = { -1,-1 };
 	isCastling[0][0] = true, isCastling[1][0] = true, isCastling[0][1] = true, isCastling[1][1] = true;
 	movableVec.clear();
@@ -61,12 +61,12 @@ int Board::onclick(int& x, int& y)
 	if (pos.x > 7 || pos.x < 0 || pos.y > 7 || pos.y < 0)
 		return -1;
 
-	if (selectId != ChessId::None)
+	if (selectId != ChessId::none)
 		for (auto&movement : movableVec)
 			if (movement == pos)
 				return move(pos);
 
-	if (chessIdMap[pos.y][pos.x] != ChessId::None)
+	if (chessIdMap[pos.y][pos.x] != ChessId::none)
 	{
 		select(chessIdMap[pos.y][pos.x]);
 		return 0;
@@ -88,7 +88,7 @@ void Board::select(int id)  // legal move decision
 			drawPatch(canvas, movement.x, movement.y, L"❉ ");
 	}
 	else
-		selectId = ChessId::None, refresh();
+		selectId = ChessId::none, refresh();
 }
 
 int Board::move(Pos pos)
@@ -97,15 +97,15 @@ int Board::move(Pos pos)
 	movableVec.clear();
 
 	// last pos
-	chessIdMap[chessSet[selectId].getPos().y][chessSet[selectId].getPos().x] = ChessId::None;
+	chessIdMap[chessSet[selectId].getPos().y][chessSet[selectId].getPos().x] = ChessId::none;
 
 	// pawn special
 	if (chessSet[selectId].getChess().getType() == ChessType::Pawn)
 	{
 		if (pos.y == 7 || pos.y == 0)
 			chessSet[selectId].setType(ChessType::Queen);
-		else if (chessSet[selectId].getPos().x != pos.x && chessIdMap[pos.y][pos.x] == ChessId::None)
-			chessIdMap[chessSet[lastMoveId].getPos().y][chessSet[lastMoveId].getPos().x] = ChessId::None, chessSet[lastMoveId].setAlive(false);
+		else if (chessSet[selectId].getPos().x != pos.x && chessIdMap[pos.y][pos.x] == ChessId::none)
+			chessIdMap[chessSet[lastMoveId].getPos().y][chessSet[lastMoveId].getPos().x] = ChessId::none, chessSet[lastMoveId].setAlive(false);
 	}
 	// king & rook isCastling
 	if (selectId == ChessId::wKing)
@@ -123,14 +123,14 @@ int Board::move(Pos pos)
 	// castling
 	if (chessSet[selectId].getChess().getType() == ChessType::King && abs(chessSet[selectId].getPos().x - pos.x) == 2)
 		if (int(pos.x / 3) == 0)  // left
-			chessIdMap[pos.y][pos.x + 1] = chessIdMap[pos.y][0], chessIdMap[pos.y][0] = ChessId::None,
+			chessIdMap[pos.y][pos.x + 1] = chessIdMap[pos.y][0], chessIdMap[pos.y][0] = ChessId::none,
 			chessSet[chessIdMap[pos.y][pos.x + 1]].setPos(Pos({ pos.x + 1,pos.y }));
 		else  // right
-			chessIdMap[pos.y][pos.x - 1] = chessIdMap[pos.y][7], chessIdMap[pos.y][7] = ChessId::None,
+			chessIdMap[pos.y][pos.x - 1] = chessIdMap[pos.y][7], chessIdMap[pos.y][7] = ChessId::none,
 			chessSet[chessIdMap[pos.y][pos.x - 1]].setPos(Pos({ pos.x - 1,pos.y }));
 		
 	// next pos
-	if (chessIdMap[pos.y][pos.x] != ChessId::None)
+	if (chessIdMap[pos.y][pos.x] != ChessId::none)
 	{
 		if (chessIdMap[pos.y][pos.x] == ChessId::bKing)
 			winner = 1;
@@ -143,14 +143,14 @@ int Board::move(Pos pos)
 	chessSet[selectId].setPos(pos);
 
 	lastMoveId = selectId;
-	selectId = ChessId::None;
+	selectId = ChessId::none;
 	refresh();
 	return winner;
 }
 
 void Board::refresh()
 {
-	canvas.setCharImage(frame);
+	canvas.renderCharImage(frame);
 	for (auto& chess : chessSet)
 	{
 		Pos& p = chess.getPos();

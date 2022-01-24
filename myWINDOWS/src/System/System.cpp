@@ -1,7 +1,7 @@
 ﻿#include <thread>
 #include <algorithm>
 
-#include "AppHandler.h"
+#include "System.h"
 
 #include "../App/Collection/Desktop/Desktop.h"
 #include "../App/Collection/Settings/Settings.h"
@@ -9,11 +9,11 @@
 #include "../App/Collection/Chess/Chess.h"
 
 
-AppHandler* AppHandler::appHandler = new AppHandler();
+System* System::appHandler = new System();
 
-AppHandler::AppHandler()
+System::System()
 {
-	eventCallback = std::bind(&AppHandler::onEvent, this, std::placeholders::_1);
+	eventCallback = std::bind(&System::onEvent, this, std::placeholders::_1);
 
 	return;
 
@@ -50,18 +50,19 @@ AppHandler::AppHandler()
 	Sleep(500);
 }
 
-void AppHandler::run()
+void System::run()
 {
 	createApp(AppCollection::Desktop);
+	//createApp(AppCollection::Painter);
 
 	pollingThread = std::thread([this]() {try { pollingUpdate(); } catch (...) { return; } });
 	inputThread = std::thread([]() {	try { Input::get().run(); } catch (...) { return; }});
 
-	pollingThread.detach();
+	pollingThread.join();
 	inputThread.join();
 }
 
-void AppHandler::createApp(AppCollection name)
+void System::createApp(AppCollection name)
 {
 	static Pos windowPos = { 0,0 };
 	windowPos++;
@@ -69,7 +70,7 @@ void AppHandler::createApp(AppCollection name)
 	switch (name)
 	{
 	default:
-	case AppCollection::Unknown:
+	case AppCollection::unknown:
 		return;
 	case AppCollection::Desktop:
 		appList.emplace_back(new Desktop(windowPos));
@@ -104,10 +105,10 @@ void AppHandler::createApp(AppCollection name)
 			return;
 		}
 	}));
-	runThreadList.back().detach();
+	runThreadList.back().join();
 }
 
-void AppHandler::shutdown()
+void System::shutdown()
 {
 	isRun = false;
 
@@ -126,11 +127,14 @@ void AppHandler::shutdown()
 	Sleep(5000);
 }
 
-void AppHandler::pollingUpdate()
+void System::pollingUpdate()
 {
 	bool isNeedUpdate;
+
 	while (isRun)
 	{
+		time = clock();
+
 		isNeedUpdate = false;
 		for (auto* app : appList)
 			if (app->pollingUpdate())
@@ -139,11 +143,11 @@ void AppHandler::pollingUpdate()
 		if (!Input::get().getIsEventUpdate() || isNeedUpdate)
 			update();
 
-		Sleep(int(1000 * pollingPeriod));
+		Sleep(int(1000 * pollingPeriod)), fps = 1000.0f / (clock() - time);
 	}
 }
 
-void AppHandler::update(bool isFlush)
+void System::update(bool isFlush)
 {
 	static bool isUpdating;
 	if (isUpdating)
@@ -183,7 +187,7 @@ void AppHandler::update(bool isFlush)
 	isUpdating = false;
 }
 
-void AppHandler::onEvent(Event & e)  // from input
+void System::onEvent(Event & e)  // from input
 {
 	if (e.getType() == EventType::shutdown)
 		for (auto& app : appList)
@@ -216,7 +220,7 @@ void AppHandler::onEvent(Event & e)  // from input
 		shutdown();
 }
 
-bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPrs)
+bool System::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 {
 	if (!isPrs)
 		return false;
@@ -233,32 +237,32 @@ bool AppHandler::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 	}
 
 	mouse.offsetX = 0, mouse.offsetY = 0;
-	switch (key)
+	switch (KeyPrsEvent::toKeySet(key))
 	{
-	case VK_ESCAPE:
+	case KeySet::esc:
 		shutdown();
 		break;
-	case VK_UP:
+	case KeySet::up:
 		e = EventType::mouseMove;
 		mouse.offsetY = -mouse.speed;
 		mouse.Y = max(mouse.Y + mouse.offsetY, 0);
 		break;
-	case VK_DOWN:
+	case KeySet::down:
 		e = EventType::mouseMove;
 		mouse.offsetY = mouse.speed;
 		mouse.Y = min(mouse.Y + mouse.offsetY, MY_WINDOW_HEIGHT - 1);
 		break;
-	case VK_LEFT:
+	case KeySet::left:
 		e = EventType::mouseMove;
 		mouse.offsetX = -mouse.speed;
 		mouse.X = max(mouse.X + mouse.offsetX, 0);
 		break;
-	case VK_RIGHT:
+	case KeySet::right:
 		e = EventType::mouseMove;
 		mouse.offsetX = mouse.speed;
 		mouse.X = min(mouse.X + mouse.offsetX, MY_WINDOW_WIDTH - 1);
 		break;
-	case 0x20:  // VK_SPACE
+	case KeySet::spacebar:  // VK_SPACE
 		mouse.isPrs = !mouse.isPrs;
 		e = mouse.isPrs ? EventType::mousePrs : EventType::mouseRls;
 		break;

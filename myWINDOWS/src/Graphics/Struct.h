@@ -24,42 +24,64 @@ enum Position { absolute, relative };
 enum class Dir { top, right, bottom, left };
 enum Unit { px, vw, vh };
 
-struct PosHAttr
+struct Pos4HAttr
 {
 	Dir dir;
 	int value;
 	Unit unit;
 	Position position;
 };
-struct Left :public PosHAttr
+struct Left :public Pos4HAttr
 {
-	Left(int value, Unit unit = px, Position position = absolute) : PosHAttr({ Dir::left,value,unit,position }) {}
+	Left(int value, Unit unit = px, Position position = relative) : Pos4HAttr({ Dir::left,value,unit,position }) {}
 };
-struct Right :public PosHAttr
+struct Right :public Pos4HAttr
 {
-	Right(int value, Unit unit = px, Position position = absolute) : PosHAttr({ Dir::right,value,unit,position }) {}
+	Right(int value, Unit unit = px, Position position = relative) : Pos4HAttr({ Dir::right,value,unit,position }) {}
 };
 
-struct PosVAttr
+struct Pos4VAttr
 {
 	Dir dir;
 	int value;
 	Unit unit;
 	Position position;
 };
-struct Top :public PosVAttr
+struct Top :public Pos4VAttr
 {
-	Top(int value, Unit unit = px, Position position = absolute) : PosVAttr({ Dir::top,value,unit,position }) {}
+	Top(int value, Unit unit = px, Position position = relative) : Pos4VAttr({ Dir::top,value,unit,position }) {}
 };
-struct Bottom :public PosVAttr
+struct Bottom :public Pos4VAttr
 {
-	Bottom(int value, Unit unit = px, Position position = absolute) : PosVAttr({ Dir::bottom,value,unit,position }) {}
+	Bottom(int value, Unit unit = px, Position position = relative) : Pos4VAttr({ Dir::bottom,value,unit,position }) {}
 };
 
 struct Pos4
 {
-	PosHAttr hAttr;
-	PosVAttr vAttr;
+	Pos4HAttr hAttr;
+	Pos4VAttr vAttr;
+};
+
+/* Size2 *********************************************************/
+
+struct Width
+{
+	int value;
+	Unit unit = px;
+	Width() {}
+	Width(int value, Unit unit = px) :value(value), unit(unit) {}
+};
+struct Height
+{
+	int value;
+	Unit unit = px;
+	Height() {}
+	Height(int value, Unit unit = px) :value(value), unit(unit) {}
+};
+struct Size2
+{
+	Width width;
+	Height height;
 };
 
 /* Pos, Size (origin) *********************************************************/

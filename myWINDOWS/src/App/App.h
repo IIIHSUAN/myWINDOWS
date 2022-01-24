@@ -3,11 +3,13 @@
 #include <list>
 
 #include "Window/Window.h"
+#include "Window/Collection/DevToolWindow.h"
+
 #include "AppCollection.h"
 
-class AppHandler;
+class System;
 
-#define PUSH_WINDOW(window_ptr, window_entity) window_ptr.reset(new window_entity), pushWindow(window_ptr)
+#define push_window(window_ptr, window_entity) window_ptr.reset(new window_entity), pushWindow(window_ptr)
 
 /*
  * template
@@ -20,7 +22,7 @@ class App
 public:
 	App(AppCollection app) : app(app) {}
 
-	friend AppHandler;
+	friend System;
 
 	inline void setWindowList(std::list<std::shared_ptr<Window>>& _windowList) { windowList = _windowList; }
 	inline std::list<std::shared_ptr<Window>>& getWindowList() { return windowList; }

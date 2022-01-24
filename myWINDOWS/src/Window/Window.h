@@ -11,8 +11,7 @@
 class App;
 class Elements;
 
-#define PUSH_ELEMENTS(ele_ptr, ele_entity) ele_ptr.reset(new ele_entity), pushElements(ele_ptr)
-#define ZINDEX(ele_ptr, index) zIndex((std::shared_ptr<Elements>)ele_ptr, index)
+#define push_elements(ele_ptr, ele_entity) ele_ptr.reset(new ele_entity), pushElements(ele_ptr)
 #define FRONT(ind) getElementsListSize() - 1 - ind
 
 class Window
@@ -27,12 +26,11 @@ public:
 	inline const int& getY() { return pos.y; }
 	inline const Pos& getPos() { return pos; }
 	inline const Size& getSize() { return size; }
-	inline const int& getId() { return id; }
-	inline const bool& getIsRun() { return isRun; }
 	inline Canvas& getCanvas() { return canvas; }
+	inline const int& getId() { return id; }
 	inline std::list<std::shared_ptr<Elements>>& getElementsList() { return elementsList; }
+	inline const bool& getIsRun() { return isRun; }
 
-	inline void setWindowOffset(int offsetX, int offsetY) { pos.x += offsetX, pos.y += offsetY, canvas.setPos(pos); }
 	inline void setTitle(std::wstring& str) { title = L"  " + str + L"  ", canvas.getCanvas().replace(3, title.length(), title); }
 	inline void setId(unsigned int i) { id = i; }
 
@@ -44,9 +42,8 @@ public:
 
 	bool pollingUpdate();
 	
-	inline void setIsPollingRefresh(bool b) { isForcePollingRefresh = b; }
 protected:
-	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) { 
+	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) {
 		ele_ptr->setZindex(int(elementsList.size())), ele_ptr->setId(elementsIdNum++), elementsList.emplace_back(ele_ptr), elementsUpdate();
 	}
 	int getElementsListSize() { return int(elementsList.size()); }
@@ -60,15 +57,16 @@ private:
 	Canvas canvas;  // pos, size attr
 	
 	// element held by custom sub class
-	bool isNeedUpdate = false, isRun = true, isForcePollingRefresh = false;
+	bool isNeedUpdate = false, isRun = true;
 	unsigned int elementsIdNum = 0;
 	std::list<std::shared_ptr<Elements>>elementsList;
-	void elementsUpdate(bool forceUpdate = false);
+	void elementsUpdate();
 
 	void zindex(unsigned int& ind, unsigned int& ele_zindex);
 	void ajustZindex();
 
 	bool onEvent(Event& e);
+	void elementsOnEvent(Event& e);
 	std::function<void(std::string)> recieveCallback = nullptr;
 	std::function<bool(MouseMoveEvent)> mouseMoveCallback = nullptr;
 	std::function<bool(MousePrsEvent)> mousePrsCallback = nullptr;

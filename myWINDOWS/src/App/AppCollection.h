@@ -1,3 +1,3 @@
 #pragma once
 
-enum class AppCollection { Unknown, Desktop, Menu, WindowManager, Settings, Painter, MyPhoto, Chess };
+enum class AppCollection { unknown, Desktop, Menu, WindowManager, Settings, Painter, MyPhoto, Chess };

@@ -11,11 +11,11 @@ std::vector<Pos> ChessPiece::getMovableVec(int chessIdMap[8][8], ChessPiece ches
 	{
 		// hostile front-left
 		drawX = pos.x - 1, drawY = pos.y + orient;
-		if (drawX >= 0 && chessIdMap[drawY][drawX] != ChessId::None && isSameTeam(chessIdMap[drawY][drawX]))
+		if (drawX >= 0 && chessIdMap[drawY][drawX] != ChessId::none && isSameTeam(chessIdMap[drawY][drawX]))
 			result.emplace_back(Pos({ drawX,drawY }));
 		// hostile front-right
 		drawX = pos.x + 1, drawY = pos.y + orient;
-		if (drawX <= 7 && chessIdMap[drawY][drawX] != ChessId::None &&  isSameTeam(chessIdMap[drawY][drawX]))
+		if (drawX <= 7 && chessIdMap[drawY][drawX] != ChessId::none &&  isSameTeam(chessIdMap[drawY][drawX]))
 			result.emplace_back(Pos({ drawX,drawY }));
 		
 		// hostile left && hostile pawn first two stride
@@ -32,11 +32,11 @@ std::vector<Pos> ChessPiece::getMovableVec(int chessIdMap[8][8], ChessPiece ches
 			result.emplace_back(Pos({ drawX,drawY + orient }));;
 
 		// straight
-		if (chessIdMap[pos.y + orient][pos.x] == ChessId::None)
+		if (chessIdMap[pos.y + orient][pos.x] == ChessId::none)
 		{
 			result.emplace_back(Pos({ pos.x,pos.y + orient }));  // x1
 
-			if (pos.y == ((orient > 0) ? 1 : 6) && chessIdMap[pos.y + orient * 2][pos.x] == ChessId::None)  // start, x2
+			if (pos.y == ((orient > 0) ? 1 : 6) && chessIdMap[pos.y + orient * 2][pos.x] == ChessId::none)  // start, x2
 				result.emplace_back(Pos({ pos.x,pos.y + orient * 2 }));
 		}
 	}
@@ -44,16 +44,16 @@ std::vector<Pos> ChessPiece::getMovableVec(int chessIdMap[8][8], ChessPiece ches
 	// castling, not check checkmate
 	if (id==ChessId::wKing)
 	{
-		if (isCastling[0][0] && chessIdMap[pos.y][pos.x + 1] == ChessId::None && chessIdMap[pos.y][pos.x + 2] == ChessId::None)
+		if (isCastling[0][0] && chessIdMap[pos.y][pos.x + 1] == ChessId::none && chessIdMap[pos.y][pos.x + 2] == ChessId::none)
 			result.emplace_back(Pos({ pos.x + 2,pos.y }));
-		if (isCastling[0][1] && chessIdMap[pos.y][pos.x - 1] == ChessId::None && chessIdMap[pos.y][pos.x - 2] == ChessId::None && chessIdMap[pos.y][pos.x - 3] == ChessId::None)
+		if (isCastling[0][1] && chessIdMap[pos.y][pos.x - 1] == ChessId::none && chessIdMap[pos.y][pos.x - 2] == ChessId::none && chessIdMap[pos.y][pos.x - 3] == ChessId::none)
 			result.emplace_back(Pos({ pos.x - 2,pos.y }));
 	}
 	else if (id == ChessId::bKing)
 	{
-		if (isCastling[1][0] && chessIdMap[pos.y][pos.x + 1] == ChessId::None && chessIdMap[pos.y][pos.x + 2] == ChessId::None && chessIdMap[pos.y][pos.x + 3] == ChessId::None)
+		if (isCastling[1][0] && chessIdMap[pos.y][pos.x + 1] == ChessId::none && chessIdMap[pos.y][pos.x + 2] == ChessId::none && chessIdMap[pos.y][pos.x + 3] == ChessId::none)
 			result.emplace_back(Pos({ pos.x + 2,pos.y }));
-		if (isCastling[1][1] && chessIdMap[pos.y][pos.x - 1] == ChessId::None && chessIdMap[pos.y][pos.x - 2] == ChessId::None)
+		if (isCastling[1][1] && chessIdMap[pos.y][pos.x - 1] == ChessId::none && chessIdMap[pos.y][pos.x - 2] == ChessId::none)
 			result.emplace_back(Pos({ pos.x - 2,pos.y }));
 	}
 
@@ -70,7 +70,7 @@ std::vector<Pos> ChessPiece::getMovableVec(int chessIdMap[8][8], ChessPiece ches
 
 				if (drawX >= 0 && drawX < 8 && drawY >= 0 && drawY < 8)
 				{
-					if (chessIdMap[drawY][drawX] == ChessId::None)
+					if (chessIdMap[drawY][drawX] == ChessId::none)
 						result.emplace_back(Pos({ drawX,drawY }));
 					else if (isSameTeam(chessIdMap[drawY][drawX]))  // id not in same color
 					{

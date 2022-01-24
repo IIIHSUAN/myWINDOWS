@@ -16,7 +16,7 @@ class Chess :public App
 {
 public:
 	Chess(Pos pos = { 2,1 }) : App(AppCollection::Chess) {
-		PUSH_WINDOW(window, ChessWindow(0, L"Chess", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 5 }));
+		push_window(window, ChessWindow(0, L"Chess", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 5 }));
 
 		//App::setPollingUpdate(true);
 		

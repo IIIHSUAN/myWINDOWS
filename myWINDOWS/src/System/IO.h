@@ -4,7 +4,7 @@
 
 class Mouse {
 public:
-	int X = 20, Y = 5, offsetX = 0, offsetY = 0;
+	int X = 0, Y = 5, offsetX = 0, offsetY = 0;
 	bool isPrs = false;
 
 	enum Speed { normal = 1, fast = 2, vfast = 4 };

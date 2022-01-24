@@ -3,7 +3,7 @@
 #include "ChessClass.h"
 
 enum ChessId :int {
-	None = -16,
+	none = -16,
 	wKing = 0, wQueen, wRook0, wRook1, wBishop0, wBishop1, wKnight0, wKnight1, wPawn0, wPawn1, wPawn2, wPawn3, wPawn4, wPawn5, wPawn6, wPawn7,
 	bKing, bQueen, bRook0, bRook1, bBishop0, bBishop1, bKnight0, bKnight1, bPawn0, bPawn1, bPawn2, bPawn3, bPawn4, bPawn5, bPawn6, bPawn7
 };
