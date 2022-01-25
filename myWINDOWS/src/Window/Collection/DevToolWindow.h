@@ -9,7 +9,7 @@
 class DevToolWindow : public Window
 {
 public:
-	DevToolWindow(int _id, Pos _pos, Size _size, std::wstring _name = L"DevTool") : Window(_id, _name, _pos, _size) {
+	DevToolWindow(int _id, Pos _pos, Size _size, bool isTransparent = false) : Window(_id, std::wstring(L"DevTool"), _pos, _size, isTransparent ? TRANSPARENT_WCHAR : WHITESPACE_WCHAR) {
 
 		/* Window pollingCallback ************************************************************/
 		setPollingCallback([this]() {

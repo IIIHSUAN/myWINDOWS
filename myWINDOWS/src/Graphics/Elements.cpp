@@ -5,15 +5,7 @@
 #include <Windows.h>
 #include <thread>
 
-/* Elements ****************************************************/
-
-void Elements::flush_impl(wchar_t flushChar)
-{
-	if (flushChar)
-		canvas.flush(flushChar);
-	else
-		canvas.flush();
-}
+/* Elements ****************************************************/		
 
 bool Elements::_onMouseMove(MouseMoveEvent & e)
 {
@@ -36,7 +28,6 @@ bool Elements::_onMouseMove(MouseMoveEvent & e)
 
 	return isCallback;
 }
-
 bool Elements::_onMousePrs(MousePrsEvent & e)
 {
 	Pos& pos = canvas.getPos();
@@ -49,7 +40,6 @@ bool Elements::_onMousePrs(MousePrsEvent & e)
 
 	return isCallback;
 }
-
 bool Elements::_onMouseRls(MouseRlsEvent & e)
 {
 	Pos& pos = canvas.getPos();
@@ -68,7 +58,6 @@ bool Elements::_onMouseRls(MouseRlsEvent & e)
 
 	return isCallback;
 }
-
 void Elements::_onWindowResize(WindowResizeEvent & e)
 {
 	if (animFunc)
@@ -84,15 +73,20 @@ void Elements::_onWindowResize(WindowResizeEvent & e)
 		setSize2(canvas.getSize2()), setPos4(canvas.getPos4());
 }
 
-bool Elements::onPollingUpdate(bool& isForceWindowRefresh)
+PollingStatus Elements::onPollingUpdate(unsigned int& mouseMoveHandledElementInd)
 {
-	bool b = isNeedUpdate;
-	if (pollingCallback) b |= pollingCallback();
-	if (animFunc && anim.status == Animate::play && animFunc()) 
-		onMouseMove(MouseMoveEvent(Mouse::get().X, Mouse::get().Y, Mouse::get().X, Mouse::get().Y,false)),  // virtual MouseMoveEvent
-		isForceWindowRefresh |= true;
-	if (animCallback) animCallback(), animCallback = nullptr;
-	isNeedUpdate = false; return b;
+	PollingStatus pollingStatus = isNeedUpdate ? PollingStatus::needUpdate : PollingStatus::none;
+
+	if (animFunc && anim.status == Animate::play && animFunc())
+	{
+		pollingStatus = PollingStatus::refresh;
+		if (zindex > mouseMoveHandledElementInd)
+			onMouseMove(MouseMoveEvent(Mouse::get().X, Mouse::get().Y, Mouse::get().offsetX, Mouse::get().offsetY, false));  // virtual MouseMoveEvent
+		if (animCallback) animCallback(), animCallback = nullptr;
+	}
+
+	if (pollingCallback && pollingCallback()) pollingStatus = PollingStatus::needUpdate;
+	isNeedUpdate = false; return pollingStatus;
 }
 
 void Elements::animate(Animate _anim, std::function<void()> callback)
@@ -125,7 +119,6 @@ void Elements::animate(Animate _anim, std::function<void()> callback)
 
 		if (anim.time < anim.duration - anim.dt)
 		{
-
 			if (anim.isSizeAnim)
 			{
 				anim.w = anim.startSize.width * (1 - ratio) + anim.endSize.width * ratio;
@@ -179,8 +172,8 @@ void Elements::animate(Animate _anim, std::function<void()> callback)
 
 /* Label ****************************************************/
 
-Label::Label(const wchar_t * cstr, Pos4 pos4, Window& window) 
-	: str(cstr), Elements(ElementsType::Button, window.getCanvas())
+Label::Label(const wchar_t * cstr, Pos4 pos4, Window& window, bool isWhitespace)
+	: str(cstr), isWhitespace(isWhitespace), Elements(ElementsType::Button, window.getCanvas())
 {
 	// set values
 	canvas = Canvas(pos4, { int(str.length()),1 }, parent);
@@ -247,7 +240,7 @@ Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, Window& window, int len, boo
 	:str(cstr), originStr(cstr), len(len), Elements(ElementsType::Inputbox, window.getCanvas())
 {
 	// set values
-	canvas = Canvas(pos4, { len + 2,3 }, parent, isFrame, L' ');
+	canvas = Canvas(pos4, { len + 2,3 }, parent, isFrame, WHITESPACE_WCHAR);
 
 	// update canvas
 	flush();
@@ -324,7 +317,8 @@ bool Inputbox::onKeyPrs_impl(KeyPrsEvent & e)
 
 /* Image ****************************************************/
 
-Image::Image(CharImage charImage, Window& window, bool isFrame) :charImage(charImage), Elements(ElementsType::Image, window.getCanvas())
+Image::Image(CharImage charImage, Window& window, bool isFrame, bool isWhitespace) 
+	: charImage(charImage), isWhitespace(isWhitespace), Elements(ElementsType::Image, window.getCanvas())
 {
 	// set values
 	canvas = Canvas(charImage.pos4, { charImage.size.width - 1,charImage.size.height }, parent, isFrame);
@@ -336,8 +330,8 @@ Image::Image(CharImage charImage, Window& window, bool isFrame) :charImage(charI
 /* Paragraph ****************************************************/
 
 Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size2 size2, Window& window,
-	TextAlign textAlign, bool isFrame, Size padding, wchar_t flushChar)
-	: str(cstr), textAlign(textAlign), padding(padding), Elements(ElementsType::Paragraph, window.getCanvas())
+	TextAlign textAlign, bool isFrame, Size padding, bool isWhitespace, wchar_t flushChar)
+	: str(cstr), textAlign(textAlign), padding(padding), isWhitespace(isWhitespace), Elements(ElementsType::Paragraph, window.getCanvas())
 {
 	// set values
 	canvas = Canvas(pos4, size2, parent, isFrame, flushChar);
@@ -348,7 +342,7 @@ Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size2 size2, Window& windo
 
 void Paragraph::flush_impl(wchar_t flushChar)
 {
-	flushChar ? canvas.flush(flushChar) : canvas.flush();
+	flushChar ? canvas.flush(flushChar) : canvas.flush(isWhitespace ? WHITESPACE_WCHAR : TRANSPARENT_WCHAR);
 
 	int i = padding.height, start = 0, end, breakInd;
 	do

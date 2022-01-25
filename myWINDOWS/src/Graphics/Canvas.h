@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <string>
 #include <list>
@@ -8,6 +8,8 @@
 class Window;
 
 #define PUSH_CHAR_IMAGE(canvas, ci_ptr, ci_entity) ci_ptr.reset(new ci_entity), canvas.pushCharImage(ci_ptr)
+#define TRANSPARENT_WCHAR L' '
+#define WHITESPACE_WCHAR L'\x2000'
 
 struct CharImage
 {
@@ -35,14 +37,14 @@ public:
 	void flush(wchar_t newChar = 0);
 	void frame();
 
-	void line(int X, int Y, const int showLen, const wchar_t * str, const int len);
-	void line(int X, int Y, const wchar_t * str, const int len);
-	void line(int X, int Y, std::wstring s);
-	void lineCenter(int X, int Y, std::wstring& str);
-	inline void canvasCenterLine(std::wstring& str) { lineCenter(size.width / 2, size.height / 2, str); }
+	void line(int X, int Y, const int showLen, const wchar_t * str, const int len, bool isWhitespace = true);
+	void line(int X, int Y, const wchar_t * str, const int len, bool isWhitespace = true);
+	void line(int X, int Y, std::wstring s, bool isWhitespace = true);
+	void lineCenter(int X, int Y, std::wstring& str, bool isWhitespace = true);
+	inline void canvasCenterLine(std::wstring& str, bool isWhitespace = true) { lineCenter(size.width / 2, size.height / 2, str, isWhitespace); }
 
 	void renderWith(Canvas& frontl);
-	void renderCharImage(CharImage& source);
+	void renderCharImage(CharImage& source, bool isWhitespace);
 	void renderWindow(Window& window);
 
 	int convertPos4h(const Pos4& pos4, Canvas& parent);
@@ -82,9 +84,28 @@ private:
 	Pos pos, originPos;
 	Size2 size2;
 	Size size, originSize;
+	
+	template<class T> void _renderLine(const int start, const int& width, T& src, const int srcStart, bool isWhitespace = false);
+	void _renderLine(const int start, const int& width, const wchar_t src);
 
 	inline void setPos4h(Canvas& parent) { pos.x = convertPos4h(pos4, parent); }
 	inline void setPos4v(Canvas& parent) { pos.y = convertPos4v(pos4, parent); }
 	inline void setSize2width(Canvas& parent) { size.width = convertSize2width(size2, parent); }
 	inline void setSize2height(Canvas& parent) { size.height = convertSize2height(size2, parent); }
 };
+
+template<class T>
+inline void Canvas::_renderLine(const int start, const int& width, T& src, const int srcStart, bool isWhitespace)
+{
+	for (int i = 0; i < width; i++)
+		if (isWhitespace && src[srcStart + i] == TRANSPARENT_WCHAR)
+			canvas[start + i] = WHITESPACE_WCHAR;
+		else if (src[srcStart + i] != TRANSPARENT_WCHAR)
+			canvas[start + i] = src[srcStart + i];
+}
+
+inline void Canvas::_renderLine(const int start, const int & width, const wchar_t src)
+{
+	for (int i = 0; i < width; i++)
+		canvas[start + i] = src;
+}

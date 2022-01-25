@@ -150,7 +150,7 @@ int Board::move(Pos pos)
 
 void Board::refresh()
 {
-	canvas.renderCharImage(frame);
+	canvas.renderCharImage(frame, false);
 	for (auto& chess : chessSet)
 	{
 		Pos& p = chess.getPos();

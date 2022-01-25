@@ -66,8 +66,8 @@ public:
 
 		/* tips ****************************************************************/
 
-		push_elements(p1, Paragraph(L"[Hot key] set Sensitivity - ctrl & shift            \n          shut down - Esc", { Left(7),Top(19) }, 
-			{ {48},{8} }, *this, TextAlign::left, false, { 3,2 })
+		push_elements(p1, Paragraph(L"[Hot key] set Sensitivity - ctrl & shift            \n          shut down - Esc", 
+			{ Left(7),Top(19) }, { {48},{8} }, *this, TextAlign::left, false, { 3,2 })
 		);
 	}
 

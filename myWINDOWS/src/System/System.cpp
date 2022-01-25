@@ -232,7 +232,7 @@ bool System::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 	{
 		msgStr = L"  Mouse speed: ";
 		mouse.changeSpeed(), msgStr += mouse.speed == Mouse::normal ? L"normal  " : mouse.speed == Mouse::fast ? L"fast  " : L"very fast  ";
-		msgCanvas.canvasCenterLine(msgStr);
+		msgCanvas.canvasCenterLine(msgStr);////
 		isMsg = 3;
 	}
 

@@ -9,11 +9,12 @@ typedef unsigned short WORD;
 	if(customcallback)\
 		opcode |= customcallback(static_cast<eventClass&>(e));
 
+enum class PollingStatus { none, handled, needUpdate, refresh };
+
 enum class EventType
 {
 	unknown, mouseMove, mousePrs, mouseRls, keyPrs, recieve, windowResize, shutdown
 };
-
 class Event
 {
 public:

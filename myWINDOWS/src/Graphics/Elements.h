@@ -48,7 +48,7 @@ struct Animate
 	Size startSize, endSize;
 	Size2 startSize2, endSize2;
 	bool isPosAnim = false, isSizeAnim = false, isSetCanvasPos4 = false;
-	float duration = 0.0f, time = 0.0f, dt, sleepTime = 0.0f;
+	float duration = 0.0f, time = 0.0f, dt = 1.0f, sleepTime = 0.0f;
 	std::function<float(const float&)> easingFunc;
 	enum Status { play, pause };
 	Status status = play;
@@ -90,14 +90,14 @@ public:
 
 	template <typename T> inline T& get() {	return dynamic_cast<T&>(*this); }
 
-	inline void flush(wchar_t flushChar = 0) { flush_impl(flushChar), isNeedUpdate = true; }               // (isNeedUpdate = true) already
+	inline void flush(wchar_t flushChar = 0) { flush_impl(flushChar), isNeedUpdate = true; }  // (isNeedUpdate = true) already
 	inline bool onMousePrs(MousePrsEvent e) { return _onMousePrs(e) ? onMousePrs_impl(e) : false; }	   // be sure to set isNeedUpdate
 	inline bool onMouseMove(MouseMoveEvent e) { return  _onMouseMove(e) ? onMouseMove_impl(e) : false; }  // be sure to set isNeedUpdate
 	inline bool onMouseRls(MouseRlsEvent e) { return _onMouseRls(e) ? onMouseRls_impl(e) : false; }	   // be sure to set isNeedUpdate
 	inline bool onKeyPrs(KeyPrsEvent e) { return onKeyPrs_impl(e); }	                                   // be sure to set isNeedUpdate
 	inline void onWindowResize(WindowResizeEvent e) { _onWindowResize(e), onWindowResize_impl(e); }       // be sure to set isNeedUpdate
 	inline bool pendingUpdate() { bool b = isNeedUpdate; isNeedUpdate = false; return b; }
-	bool onPollingUpdate(bool& isForceWindowRefresh);
+	PollingStatus onPollingUpdate(unsigned int& mouseMoveHandledElementInd);
 
 	void animate(Animate animateAttr, std::function<void()> callback = nullptr);
 	inline void isAnimatePause(bool b) { anim.status = b ? Animate::pause : Animate::play; }
@@ -130,7 +130,7 @@ protected:
 
 	Canvas& parent;
 	Canvas canvas;
-	ElementsInfo info;
+	ElementsInfo info;  // for Event dispatch use
 	bool isNeedUpdate = false;
 private:
 	ElementsType type;
@@ -157,13 +157,14 @@ private:
 class Label : public Elements
 {
 public:
-	Label(const wchar_t * cstr, Pos4 pos4, Window& parent);
+	Label(const wchar_t * cstr, Pos4 pos4, Window& parent, bool isWhitespace = true);
 
 	inline void setString(std::wstring _str) { str = _str; flush(); }
 private:
 	std::wstring str;
+	bool isWhitespace;
 
-	virtual void flush_impl(wchar_t flushChar) override { canvas.setSize2widthValue(int(str.length()), parent), canvas.canvasCenterLine(str); }
+	virtual void flush_impl(wchar_t flushChar) override { canvas.setSize2widthValue(int(str.length()), parent), canvas.canvasCenterLine(str, isWhitespace); }
 };
 
 /* Button ****************************************************/
@@ -219,11 +220,12 @@ private:
 class Image : public Elements
 {
 public:
-	Image(CharImage charImage, Window& parent, bool isFrame = false);
+	Image(CharImage charImage, Window& parent, bool isFrame = false, bool isWhitespace = false);
 private:
 	CharImage charImage;
+	bool isWhitespace;
 
-	virtual void flush_impl(wchar_t flushChar) override { canvas.renderCharImage(charImage); }
+	virtual void flush_impl(wchar_t flushChar) override { canvas.renderCharImage(charImage, isWhitespace); }
 };
 
 /* Paragraph ****************************************************/
@@ -232,13 +234,14 @@ class Paragraph : public Elements
 {
 public:
 	Paragraph(const wchar_t * cstr, Pos4 pos4, Size2 size2, Window& parent,
-		TextAlign textAlign = TextAlign::left, bool isFrame = false, Size padding = Size({ 2,1 }), wchar_t flushChar = L'•');
+		TextAlign textAlign = TextAlign::left, bool isFrame = false, Size padding = Size({ 2,1 }), bool isWhitespace = true, wchar_t flushChar = L'•');
 
 	inline void setString(std::wstring _str, wchar_t flushChar = 0) { str = _str; flush(flushChar); }
 private:
 	std::wstring str;
 	TextAlign textAlign;
 	Size padding;
+	bool isWhitespace;
 
 	virtual void flush_impl(wchar_t flushChar) override;
 };

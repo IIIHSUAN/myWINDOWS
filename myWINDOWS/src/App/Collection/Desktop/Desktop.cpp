@@ -6,19 +6,17 @@
 
 void DesktopWindow::b()
 {
-	bSettings->setZindex(FRONT(0));
+	static bool isFront = false;
+	isFront = !isFront;
+	bSettings->animate(Animate({ Left(50,vw),Top(50,vh) }, { Width(50,vw),Height(50,vh) }, 250, Easing::easeInOutCubic), [this]() {
+		bSettings->setZindex(isFront ? FRONT(0) : 3);
+		bSettings->getAnimate().sleep(500);
 
-	bSettings->animate(Animate({ Left(50,vw),Top(50,vh) }, { Width(50,vw),Height(50,vh) }, 500, Easing::easeOutQuad), [this]() {
-		bSettings->setZindex(FRONT(3));
-		//bSettings->getAnimate().sleep(500);
-
-		bSettings->animate(Animate({ Right(50,vw),Bottom(50,vh) }, { Width(50,vw),Height(50,vh) }, 500, Easing::easeInQuad), [this]() {
-			//bSettings->getAnimate().sleep(500);
-
+		bSettings->animate(Animate({ Right(50,vw),Bottom(50,vh) }, { Width(50,vw),Height(50,vh) }, 250, Easing::easeInOutCubic), [this]() {
+			bSettings->setZindex(isFront ? FRONT(0) : 0);
 			b();
-			//bSettings->getAnimate().sleep(500);
+			bSettings->getAnimate().sleep(250);
 			lTime->toggleAnimateStatus();
-			//bSettings->getAnimate().sleep(500);
 		});
 	});
 }
@@ -28,9 +26,9 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 {
 	/* Elements ************************************************************/
 
-	push_elements(iDoge, Image(CharImage({ backgroundData , {Left(15,vw),Bottom(1,px)}, {33,11} }),  *this));
+	push_elements(iDoge, Image(CharImage({ backgroundData , {Left(15,vw),Bottom(1,px)}, {29,11} }), *this));
 
-	push_elements(lTime, Label(L"Time", { Left(10,vh),Top(8,px) },  *this));
+	push_elements(lTime, Label(L"Time", { Left(10,vh),Top(8,px) },  *this, false));
 	lTime->animate(Animate({ Left(15),Bottom(1) }, 500), [this]() {
 		a();
 	});
@@ -43,15 +41,17 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 	});
 	b();
 	bSettings->onhover([this]() {
-		if (bSettings->getInfo().mouseHover == ElementsInfo::active) bSettings->setString(L" Set Parameters ", L'#'); else bSettings->setString(L"Settings");
+		if (bSettings->getInfo().mouseHover == ElementsInfo::active)
+			bSettings->setString(L" Set Parameters ", L'#'), bSettings->isAnimatePause(true);
+		else
+			bSettings->setString(L"Settings"), bSettings->isAnimatePause(false);
 		return true;
 	});
-
 
 	push_elements(bPainter, Button(L"Painter", { Right(3),Top(25,vh) },  *this, true));
 	bPainter->onhover([this]() {
 		bPainter->setString(bPainter->getInfo().mouseHover == ElementsInfo::active ? L"Open Painter ?" : L"Painter");
-		return false;
+		return true;
 	});
 	bPainter->onclick([]() {
 		System::get().createApp(AppCollection::Painter);
@@ -61,7 +61,7 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 	push_elements(bChess, Button(L"Chess", { Right(3),Top(50,vh) },  *this, true));
 	bChess->onhover([this]() {
 		if (bChess->getInfo().mouseHover == ElementsInfo::active) bChess->setString(L"Play ?", L'|'); else bChess->setString(L"Chess");
-		return false;
+		return true;
 	});
 	bChess->onclick([]() {
 		System::get().createApp(AppCollection::Chess);
@@ -85,11 +85,11 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 		struct tm t;
 		auto lt = localtime_s(&t, &now);
 
-		std::wstring str = L"  " + std::to_wstring(t.tm_year + 1900) + L' ' + std::to_wstring(t.tm_mon + 1) + L'/' + std::to_wstring(t.tm_mday) + L' ' +
+		std::wstring str = std::to_wstring(t.tm_year + 1900) + L' ' + std::to_wstring(t.tm_mon + 1) + L'/' + std::to_wstring(t.tm_mday) + L' ' +
 			(t.tm_hour < 10 ? L"0" : L"\0") + std::to_wstring(t.tm_hour) + L':' +
 			(t.tm_min < 10 ? L"0" : L"\0") + std::to_wstring(t.tm_min) + L':' +
 			(t.tm_sec < 10 ? L"0" : L"\0") + std::to_wstring(t.tm_sec) +
-			(int(i*MY_UPDATE_PERIOD) / 10 < 10 ? L":0" : L":") + std::to_wstring(int(i*MY_UPDATE_PERIOD) / 10) + L"  ";
+			(int(i*MY_UPDATE_PERIOD) / 10 < 10 ? L":0" : L":") + std::to_wstring(int(i*MY_UPDATE_PERIOD) / 10);
 
 		lTime->setString(str);
 	});
@@ -98,7 +98,7 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 void DesktopWindow::a()
 {
 	lTime->animate(Animate({ Left(20,vw,relative),Bottom(5,px,absolute) }, 500), [this]() {
-		lTime->setZindex(1);
+		lTime->setZindex(0);
 		lTime->animate(Animate({ Left(10,vw,relative),Bottom(50,vh,relative) }, 500), [this]() {
 			lTime->setZindex(FRONT(0));
 			a();

@@ -38,12 +38,14 @@ void Window::elementsOnEvent(Event & e)
 	// Elements
 	bool isHandled = false, isRefresh = false;
 	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
+
 	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
 	{
 		switch (e.getType())  // pass Event "by value"
 		{
 		case EventType::mouseMove:
 			isHandled = (*ele)->onMouseMove((MouseMoveEvent&)e);
+			mouseMoveHandledElementInd = isHandled ? unsigned int(std::distance(elementsList.begin(), ele.base())) : 0;
 			break;
 		case EventType::mousePrs:
  			isHandled = (*ele)->onMousePrs((MousePrsEvent&)e);
@@ -187,7 +189,7 @@ void Window::zindex(unsigned int& ind, unsigned int& ele_zindex)
 	elementsList.splice(it, elementsList, rb, re);
 }
 
-void Window::ajustZindex()
+void Window::adjustZindex()
 {
 	unsigned int ind = 0; bool isAjustBack = false;
 	for (auto ele = elementsList.begin(); ele != elementsList.end();)
@@ -196,13 +198,16 @@ void Window::ajustZindex()
 			(*ele)->setZindex(ind);
 		else if ((*ele)->pollingZindex() && ind != (*ele)->zindex)
 		{
-			if ((*ele)->zindex > ind)
-				zindex(ind, (*ele)->zindex), ele = std::next(elementsList.begin(), ind);
+			if (ind < (*ele)->zindex)  // origin less than target
+			{
+				zindex(ind, (*ele)->zindex), ele = std::next(elementsList.begin(), ind - (ind != 0));
+				continue;
+			}
 			else
 				zindex(ind, (*ele)->zindex), ind = (*ele)->zindex;
 
 			isAjustBack = true;
-			continue;
+			
 		}
 
 		ele++, ind++;
@@ -218,35 +223,39 @@ void Window::refresh()
 		canvas.renderWith((*ele)->getCanvas());
 
 	canvas.frame();
-	setTitle(name), canvas.getCanvas().replace(size.width - 5, 4, L"  x ");
+	setTitle(name), canvas.line(size.width - 5, 0, L"  x ");
 }
 
 bool Window::pollingUpdate()
 {
 	elementsUpdate();
 
-	if (pollingCallback)
-		pollingCallback();
+	if (pollingCallback) pollingCallback();
 
-	bool b = isNeedUpdate; isNeedUpdate = false;
-	return b;
+	bool b = isNeedUpdate; isNeedUpdate = false; return b;
 }
 
 void Window::elementsUpdate()
 {
 	bool isRefresh = false;
+	PollingStatus pollingStatus;
 
-	// ajust zindex first
-	ajustZindex();
+	// adjust zindex first
+	adjustZindex();
 	
 	// pollingUpdate
 	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
 	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
-		if (((*ele)->onPollingUpdate(isRefresh) && (*ele)->getVisible()))
+	{
+		pollingStatus = (*ele)->onPollingUpdate(mouseMoveHandledElementInd);
+		if (pollingStatus == PollingStatus::needUpdate)
 		{
-			isNeedUpdate = true;
-			frontRenderEle = std::next(ele.base(), -1);
+			if ((*ele)->getVisible())
+				isNeedUpdate |= true, frontRenderEle = std::next(ele.base(), -1);
 		}
+		else if (pollingStatus == PollingStatus::refresh)
+			isRefresh |= true;
+	}
 
 	if (isRefresh)
 		refresh();

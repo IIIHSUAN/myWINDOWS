@@ -17,7 +17,7 @@ class Elements;
 class Window
 {
 public:
-	Window(int _id, std::wstring& _name, Pos& _pos, Size& _size, const wchar_t flushChar = L' ');
+	Window(int _id, std::wstring& _name, Pos& _pos, Size& _size, const wchar_t flushChar = WHITESPACE_WCHAR);
 	
 	friend class App;
 	friend class Elements;
@@ -31,7 +31,7 @@ public:
 	inline std::list<std::shared_ptr<Elements>>& getElementsList() { return elementsList; }
 	inline const bool& getIsRun() { return isRun; }
 
-	inline void setTitle(std::wstring& str) { title = L"  " + str + L"  ", canvas.getCanvas().replace(3, title.length(), title); }
+	inline void setTitle(std::wstring& str) { canvas.line(3, 0, L"  " + str + L"  "); }
 	inline void setId(unsigned int i) { id = i; }
 
 	inline void setRecieveCallback(std::function<void(std::string)> func) { recieveCallback = func; };
@@ -41,7 +41,8 @@ public:
 	inline void setPollingCallback(std::function<void()> func) { pollingCallback = func; };
 
 	bool pollingUpdate();
-	
+
+
 protected:
 	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) {
 		ele_ptr->setZindex(int(elementsList.size())), ele_ptr->setId(elementsIdNum++), elementsList.emplace_back(ele_ptr), elementsUpdate();
@@ -63,10 +64,11 @@ private:
 	void elementsUpdate();
 
 	void zindex(unsigned int& ind, unsigned int& ele_zindex);
-	void ajustZindex();
+	void adjustZindex();
 
 	bool onEvent(Event& e);
 	void elementsOnEvent(Event& e);
+	unsigned int mouseMoveHandledElementInd = 0;  // for Element animate use
 	std::function<void(std::string)> recieveCallback = nullptr;
 	std::function<bool(MouseMoveEvent)> mouseMoveCallback = nullptr;
 	std::function<bool(MousePrsEvent)> mousePrsCallback = nullptr;
