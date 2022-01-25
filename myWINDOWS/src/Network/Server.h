@@ -28,5 +28,5 @@ private:
 	SOCKET sListen, sConnect;
 	struct sockaddr_in clientAddr;
 	int clientAddrLen = sizeof(clientAddr);
-	std::function<void(std::string)> recieveCallback = nullptr;
+	std::function<void(std::string)> recvCallback = nullptr;
 };

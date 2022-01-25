@@ -8,17 +8,19 @@
 class Window;
 
 #define PUSH_CHAR_IMAGE(canvas, ci_ptr, ci_entity) ci_ptr.reset(new ci_entity), canvas.pushCharImage(ci_ptr)
+
 #define TRANSPARENT_WCHAR L' '
 #define WHITESPACE_WCHAR L'\x2000'
+#define IS_OPAQUE(b) (b? WHITESPACE_WCHAR : TRANSPARENT_WCHAR)
 
 struct CharImage
 {
-	const wchar_t* data;
+	const wchar_t* rawData;
 	Pos4 pos4;
 	Size size;
 	bool isVisible = true;
 
-	CharImage(const wchar_t* data, Pos4 pos4, Size size) :data(data), pos4(pos4), size(size) {}
+	CharImage(const wchar_t* rawData, Pos4 pos4, Size size) :rawData(rawData), pos4(pos4), size(size) {}
 };
 
 class Canvas
@@ -26,10 +28,10 @@ class Canvas
 public:
 	Canvas() {}
 	Canvas(Pos pos, Size size, bool isFrame = false, wchar_t flushChar = L' ')  // for Window constructor, on absolute zero
-		: pos(pos), originPos(pos), size(size), originSize(size), isFrame(isFrame),	canvas(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar) {}
+		: pos(pos), originPos(pos), size(size), originSize(size), isFrame(isFrame),	rawData(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar) {}
 
 	Canvas(Pos4 pos4, Size2 size2, Canvas& parent, bool isFrame = false, wchar_t flushChar = L' ')  // on parent zero
-		: pos4(pos4), size2(size2), isFrame(isFrame), canvas(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar) {
+		: pos4(pos4), size2(size2), isFrame(isFrame), rawData(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar) {
 		setSize2(size2, parent), originSize = size;
 		setPos4(pos4, parent), originPos = pos;
 	}
@@ -65,6 +67,7 @@ public:
 	inline void setSize2heightValue(int value, Canvas& parent) { size2.height.value = value; setSize2height(parent); }
 
 	inline void setIsFrame(bool b) { isFrame = b; }
+	inline void setFlushChar(const wchar_t c) { flushChar = c; }
 
 	inline Pos4& getPos4() { return pos4; }
 	inline Pos& getPos() { return pos; }
@@ -73,12 +76,12 @@ public:
 	inline const Pos& getOriginPos() { return pos; }
 	inline const Size& getOriginSize() { return size; }
 	inline bool& getIsFrame() { return isFrame; }
-	inline std::wstring& getCanvas() { return canvas; }
-	inline const wchar_t* getConstCanvas() { return canvas.c_str(); }
+	inline std::wstring& getRaw() { return rawData; }
+	inline const wchar_t* getRawConst() { return rawData.c_str(); }
 
 private:
 	wchar_t flushChar;
-	std::wstring canvas;
+	std::wstring rawData;
 	bool isFrame;
 	Pos4 pos4;
 	Pos pos, originPos;
@@ -99,13 +102,13 @@ inline void Canvas::_renderLine(const int start, const int& width, T& src, const
 {
 	for (int i = 0; i < width; i++)
 		if (isWhitespace && src[srcStart + i] == TRANSPARENT_WCHAR)
-			canvas[start + i] = WHITESPACE_WCHAR;
+			rawData[start + i] = WHITESPACE_WCHAR;
 		else if (src[srcStart + i] != TRANSPARENT_WCHAR)
-			canvas[start + i] = src[srcStart + i];
+			rawData[start + i] = src[srcStart + i];
 }
 
 inline void Canvas::_renderLine(const int start, const int & width, const wchar_t src)
 {
 	for (int i = 0; i < width; i++)
-		canvas[start + i] = src;
+		rawData[start + i] = src;
 }

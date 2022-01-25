@@ -7,10 +7,12 @@
 
 #include "System/IO.h"
 #include "ImageT/ImageT.h"
-#include "App/App.h"
-#include "App/AppCollection.h"
 #include "Graphics/Struct.h"
 #include "Graphics/Canvas.h"
+
+class Event;
+class App;
+enum class AppCollection;
 
 class System
 {

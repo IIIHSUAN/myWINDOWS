@@ -3,10 +3,11 @@
 
 #include "System.h"
 
-#include "../App/Collection/Desktop/Desktop.h"
-#include "../App/Collection/Settings/Settings.h"
-#include "../App/Collection/Painter/Painter.h"
-#include "../App/Collection/Chess/Chess.h"
+#include "App/App.h"
+#include "App/Collection/Desktop/Desktop.h"
+#include "App/Collection/Settings/Settings.h"
+#include "App/Collection/Painter/Painter.h"
+#include "App/Collection/Chess/Chess.h"
 
 
 System* System::appHandler = new System();
@@ -22,7 +23,7 @@ System::System()
 	auto& photo = img;
 	canvas.flush(L'⣿');
 	for (int i = 0; i < photo.getRowCount(); i++)
-		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+		canvas.getRaw().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
 	update(0);
 	Sleep(500);
@@ -30,21 +31,21 @@ System::System()
 	photo = img2;
 	canvas.flush(L'⣿');
 	for (int i = 0; i < photo.getRowCount(); i++)
-		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+		canvas.getRaw().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
 	update(0);
 	Sleep(500);
 	photo = img3;
 	canvas.flush(L'⣿');
 	for (int i = 0; i < photo.getRowCount(); i++)
-		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+		canvas.getRaw().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
 	update(0);
 	Sleep(500);
 	photo = img4;
 	canvas.flush(L'⣿');
 	for (int i = 0; i < photo.getRowCount(); i++)
-		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+		canvas.getRaw().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Welcome back !  "));
 	update(0);
 	Sleep(500);
@@ -121,7 +122,7 @@ void System::shutdown()
 	auto& photo = img3;
 	canvas.flush(L'⣿');
 	for (int i = 0; i < photo.getRowCount(); i++)
-		canvas.getCanvas().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
+		canvas.getRaw().replace((i + MY_WINDOW_HEIGHT / 2 - photo.getRowCount() / 2)*MY_WINDOW_WIDTH + MY_WINDOW_WIDTH / 2 - photo.getColumnCount() / 2, photo.getColumnCount(), photo.getData(), i*(photo.getColumnCount() - 1), photo.getColumnCount());
 	canvas.lineCenter(MY_WINDOW_WIDTH - 20, MY_WINDOW_HEIGHT / 2, std::wstring(L"  Bye!  "));
 	update(0);
 	Sleep(5000);
@@ -179,26 +180,27 @@ void System::update(bool isFlush)
 	}
 
 	// mouseUI
-	canvas.getCanvas().at(index(Mouse::get().Y, Mouse::get().X)) = (Mouse::get().isPrs ? L'\u29C8' : L'\u25A2');
+	canvas.getRaw().at(index(Mouse::get().Y, Mouse::get().X)) = (Mouse::get().isPrs ? L'\u29C8' : L'\u25A2');
 
 	// draw
-	Output::get().display(canvas.getConstCanvas()); 
+	Output::get().display(canvas.getRawConst());
 
 	isUpdating = false;
 }
 
 void System::onEvent(Event & e)  // from input
 {
-	if (e.getType() == EventType::shutdown)
+	if (e.getType() == Event::shutdown)
 		for (auto& app : appList)
 			app->onEvent(e);
 
-	if (e.getType() != EventType::unknown)
+	if (e.getType() != Event::unknown)
 		for (auto app = appList.rbegin(); app != appList.rend();)
 		{
 			if ((*app)->onEvent(e))
 			{
-				if (e.getType() == EventType::mousePrs && *appList.rbegin() != *app)
+				// window on focus
+				if (e.getType() == Event::mousePrs && *appList.rbegin() != *app)
 				{
 					auto it = std::next(appList.begin(), std::distance(appList.begin(), app.base()) - 1);
 					appList.splice(it, appList, std::next(it), appList.end());
@@ -225,14 +227,14 @@ bool System::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 	if (!isPrs)
 		return false;
 
-	EventType e = EventType::unknown;
+	Event::Type et = Event::unknown;
 	Mouse& mouse = Mouse::get();
 
 	if ((ctrl & RIGHT_CTRL_PRESSED)||(ctrl & SHIFT_PRESSED))
 	{
 		msgStr = L"  Mouse speed: ";
 		mouse.changeSpeed(), msgStr += mouse.speed == Mouse::normal ? L"normal  " : mouse.speed == Mouse::fast ? L"fast  " : L"very fast  ";
-		msgCanvas.canvasCenterLine(msgStr);////
+		msgCanvas.canvasCenterLine(msgStr);
 		isMsg = 3;
 	}
 
@@ -243,67 +245,66 @@ bool System::keyEvent(WORD key, DWORD ctrl, bool isPrs)
 		shutdown();
 		break;
 	case KeySet::up:
-		e = EventType::mouseMove;
+		if (mouse.Y <= 0) return false;
+
+		et = Event::mouseMove;
 		mouse.offsetY = -mouse.speed;
 		mouse.Y = max(mouse.Y + mouse.offsetY, 0);
 		break;
 	case KeySet::down:
-		e = EventType::mouseMove;
+		if (mouse.Y >= MY_WINDOW_HEIGHT - 1) return false;
+
+		et = Event::mouseMove;
 		mouse.offsetY = mouse.speed;
 		mouse.Y = min(mouse.Y + mouse.offsetY, MY_WINDOW_HEIGHT - 1);
 		break;
 	case KeySet::left:
-		e = EventType::mouseMove;
+		if (mouse.X <= 0) return false;
+
+		et = Event::mouseMove;
 		mouse.offsetX = -mouse.speed;
 		mouse.X = max(mouse.X + mouse.offsetX, 0);
 		break;
 	case KeySet::right:
-		e = EventType::mouseMove;
+		if (mouse.X >= MY_WINDOW_WIDTH - 1) return false;
+
+		et = Event::mouseMove;
 		mouse.offsetX = mouse.speed;
 		mouse.X = min(mouse.X + mouse.offsetX, MY_WINDOW_WIDTH - 1);
 		break;
 	case KeySet::spacebar:  // VK_SPACE
 		mouse.isPrs = !mouse.isPrs;
-		e = mouse.isPrs ? EventType::mousePrs : EventType::mouseRls;
+		et = mouse.isPrs ? Event::mousePrs : Event::mouseRls;
 		break;
 	default:
-		e = EventType::keyPrs;
+		et = Event::keyPrs;
 		break;
 	}
 
-	
-
-	switch (e)
+	switch (et)
 	{
-	case EventType::mouseMove:
+	case Event::mouseMove:
 	{
-		MouseMoveEvent event(mouse.X, mouse.Y, mouse.offsetX, mouse.offsetY, mouse.isPrs);
-
-		// out of bound
-		if ((event.getMouseX() == 0 && event.getOffsetX() < -1) || (event.getMouseX() == MY_WINDOW_WIDTH && event.getOffsetX() > 0))
-			event.setOffsetX(0);
-		if ((event.getMouseY() == 0 && event.getOffsetY() < -1) || (event.getMouseY() == MY_WINDOW_HEIGHT && event.getOffsetY() > 0))
-			event.setOffsetY(0);
-
-		eventCallback(event);
+		MouseMoveEvent e(mouse.X - mouse.offsetX, mouse.Y - mouse.offsetY, mouse.offsetX, mouse.offsetY, mouse.isPrs);
+		eventCallback(e);
 		break;
 	}
-	case EventType::mousePrs:
+	case Event::mousePrs:
 	{
-		MousePrsEvent event(mouse.X, mouse.Y, key);
-		eventCallback(event);
+		MousePrsEvent e(mouse.X, mouse.Y, key);
+		eventCallback(e);
 		break;
 	}
-	case EventType::mouseRls:
+	case Event::mouseRls:
 	{
-		MouseRlsEvent event(mouse.X, mouse.Y, key);
-		eventCallback(event);
+		MouseRlsEvent e(mouse.X, mouse.Y, key);
+		eventCallback(e);
 		break;
 	}
-	case EventType::keyPrs:
+	case Event::keyPrs:
 	{
-		KeyPrsEvent event(key);
-		eventCallback(event);
+		KeyPrsEvent e(key);
+		eventCallback(e);
 		break;
 	}
 	}

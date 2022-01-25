@@ -5,7 +5,6 @@
 #include "Window/Window.h"
 #include "Window/Collection/DevToolWindow.h"
 
-#include "AppCollection.h"
 
 class System;
 
@@ -16,6 +15,8 @@ class System;
  * public get App::member via public:
  * child using App::member via App::func()
  */
+
+enum class AppCollection { unknown, Desktop, Menu, WindowManager, Settings, Painter, MyPhoto, Chess };
 
 class App
 {

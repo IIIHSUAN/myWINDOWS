@@ -1,9 +1,10 @@
 ﻿#include "Elements.h"
 
-#include <System/System.h>
-
 #include <Windows.h>
 #include <thread>
+
+#include "System/System.h"
+#include "Window/Window.h"
 
 /* Elements ****************************************************/		
 
@@ -14,7 +15,8 @@ bool Elements::_onMouseMove(MouseMoveEvent & e)
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 
 	bool isCallback = false;
-	if (e.getMouseX() >= 0 && e.getMouseX() < size.width && e.getMouseY() >= 0 && e.getMouseY() < size.height)
+	if (e.getMouseX() + e.getOffsetX() >= 0 && e.getMouseX() + e.getOffsetX() < size.width && 
+		e.getMouseY() + e.getOffsetY() >= 0 && e.getMouseY() + e.getOffsetY() < size.height)
 		info.mouseHover = ElementsInfo::active, isCallback = true;
 	else if (info.mouseHover == ElementsInfo::active)
 		info.mouseHover = ElementsInfo::cancel, isCallback = true;
@@ -73,15 +75,16 @@ void Elements::_onWindowResize(WindowResizeEvent & e)
 		setSize2(canvas.getSize2()), setPos4(canvas.getPos4());
 }
 
-PollingStatus Elements::onPollingUpdate(unsigned int& mouseMoveHandledElementInd)
+PollingStatus Elements::onPollingUpdate(WindowMouseInfo& mouseInfo)
 {
 	PollingStatus pollingStatus = isNeedUpdate ? PollingStatus::needUpdate : PollingStatus::none;
 
 	if (animFunc && anim.status == Animate::play && animFunc())
 	{
 		pollingStatus = PollingStatus::refresh;
-		if (zindex > mouseMoveHandledElementInd)
-			onMouseMove(MouseMoveEvent(Mouse::get().X, Mouse::get().Y, Mouse::get().offsetX, Mouse::get().offsetY, false));  // virtual MouseMoveEvent
+		if (mouseInfo.last.x == Mouse::get().X && mouseInfo.last.y == Mouse::get().Y &&  // still on this window
+			zindex > mouseInfo.handledElementInd)
+			onMouseMove(MouseMoveEvent(mouseInfo.last.x, mouseInfo.last.y, 0, 0, false));  // virtual MouseMoveEvent
 		if (animCallback) animCallback(), animCallback = nullptr;
 	}
 
@@ -342,7 +345,7 @@ Paragraph::Paragraph(const wchar_t * cstr, Pos4 pos4, Size2 size2, Window& windo
 
 void Paragraph::flush_impl(wchar_t flushChar)
 {
-	flushChar ? canvas.flush(flushChar) : canvas.flush(isWhitespace ? WHITESPACE_WCHAR : TRANSPARENT_WCHAR);
+	flushChar ? canvas.flush(flushChar) : canvas.flush(IS_OPAQUE(isWhitespace));
 
 	int i = padding.height, start = 0, end, breakInd;
 	do

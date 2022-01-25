@@ -71,8 +71,10 @@ struct Animate
 
 /* Elements ****************************************************/
 
-enum class ElementsType { none, Label, Button, Inputbox, Image, Paragraph };
+struct WindowMouseInfo;
+class Window;
 
+enum class ElementsType { none, Label, Button, Inputbox, Image, Paragraph };
 struct ElementsInfo
 {
 	enum InfoType { none, active, cancel };
@@ -90,14 +92,14 @@ public:
 
 	template <typename T> inline T& get() {	return dynamic_cast<T&>(*this); }
 
-	inline void flush(wchar_t flushChar = 0) { flush_impl(flushChar), isNeedUpdate = true; }  // (isNeedUpdate = true) already
-	inline bool onMousePrs(MousePrsEvent e) { return _onMousePrs(e) ? onMousePrs_impl(e) : false; }	   // be sure to set isNeedUpdate
+	inline void flush(wchar_t flushChar = 0) { flush_impl(flushChar), isNeedUpdate = true; }              // (isNeedUpdate = true) already
+	inline bool onMousePrs(MousePrsEvent e) { return _onMousePrs(e) ? onMousePrs_impl(e) : false; }	      // be sure to set isNeedUpdate
 	inline bool onMouseMove(MouseMoveEvent e) { return  _onMouseMove(e) ? onMouseMove_impl(e) : false; }  // be sure to set isNeedUpdate
-	inline bool onMouseRls(MouseRlsEvent e) { return _onMouseRls(e) ? onMouseRls_impl(e) : false; }	   // be sure to set isNeedUpdate
-	inline bool onKeyPrs(KeyPrsEvent e) { return onKeyPrs_impl(e); }	                                   // be sure to set isNeedUpdate
+	inline bool onMouseRls(MouseRlsEvent e) { return _onMouseRls(e) ? onMouseRls_impl(e) : false; }	      // be sure to set isNeedUpdate
+	inline bool onKeyPrs(KeyPrsEvent e) { return onKeyPrs_impl(e); }	                                  // be sure to set isNeedUpdate
 	inline void onWindowResize(WindowResizeEvent e) { _onWindowResize(e), onWindowResize_impl(e); }       // be sure to set isNeedUpdate
 	inline bool pendingUpdate() { bool b = isNeedUpdate; isNeedUpdate = false; return b; }
-	PollingStatus onPollingUpdate(unsigned int& mouseMoveHandledElementInd);
+	PollingStatus onPollingUpdate(WindowMouseInfo& mouseInfo);
 
 	void animate(Animate animateAttr, std::function<void()> callback = nullptr);
 	inline void isAnimatePause(bool b) { anim.status = b ? Animate::pause : Animate::play; }
@@ -140,7 +142,7 @@ private:
 	
 	std::function<bool()> pollingCallback = nullptr;
 
-	// preset
+	// run default
 	bool _onMouseMove(MouseMoveEvent& e);
 	bool _onMousePrs(MousePrsEvent& e);
 	bool _onMouseRls(MouseRlsEvent& e);

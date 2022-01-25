@@ -41,15 +41,16 @@ public:
 	Desktop(Pos pos = { 3,1 }) : App(AppCollection::Desktop) {
 		push_window(desktopWindow, DesktopWindow(0, L"Desktop", pos, { MY_WINDOW_WIDTH - 50, MY_WINDOW_HEIGHT - 5 }));
 
-		push_window(devToolWindow, DevToolWindow(0, { MY_WINDOW_WIDTH - 40, 2 }, { 40,20 }, true));
+		push_window(devToolWindow, DevToolWindow(0, { MY_WINDOW_WIDTH - 40, 2 }, { 40,20 }, false));
 		auto& desktop = (DesktopWindow &)*desktopWindow;
 		auto& s = desktop.bSettings;
 		auto& t = desktop.lTime;
 
 		devTool_push(devToolWindow, System::get().getFps());
+
 		//devTool_push(devToolWindow, s->getAnimate().sleepTime);
-		devTool_push(devToolWindow, s->getZindex());
-		devTool_push(devToolWindow, t->getZindex());
+		//devTool_push(devToolWindow, s->getZindex());
+		//devTool_push(devToolWindow, t->getZindex());
 	}
 private:
 	std::shared_ptr<Window> desktopWindow, devToolWindow;

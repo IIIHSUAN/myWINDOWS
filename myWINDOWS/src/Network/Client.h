@@ -26,5 +26,5 @@ private:
 	SOCKADDR_IN addr;
 	SOCKET sConnect;
 	char buffer[1024];
-	std::function<void(std::string)> recieveCallback = nullptr;
+	std::function<void(std::string)> recvCallback = nullptr;
 };

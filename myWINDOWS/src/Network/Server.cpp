@@ -84,8 +84,8 @@ int Server::listen()
 
 		C("recv " << buffer);
 
-		if (recieveCallback)
-			recieveCallback(buffer);
+		if (recvCallback)
+			recvCallback(buffer);
 	}
 
 	return 0;
@@ -93,5 +93,5 @@ int Server::listen()
 
 void Server::setRecieveCallback(std::function<void(std::string)> func)
 {
-	recieveCallback = std::bind(func, std::placeholders::_1);
+	recvCallback = std::bind(func, std::placeholders::_1);
 }

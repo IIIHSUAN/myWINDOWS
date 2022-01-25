@@ -4,26 +4,19 @@
 
 typedef unsigned short WORD;
 
-#define FUNC(opcode, windowFunc, app, window, customcallback, eventClass, e)\
-	opcode |= windowFunc(static_cast<eventClass&>(window, e));\
-	if(customcallback)\
-		opcode |= customcallback(static_cast<eventClass&>(e));
-
 enum class PollingStatus { none, handled, needUpdate, refresh };
 
-enum class EventType
-{
-	unknown, mouseMove, mousePrs, mouseRls, keyPrs, recieve, windowResize, shutdown
-};
 class Event
 {
 public:
-	Event() = default;
-	Event(EventType type) :type(type) {}
+	enum Type { unknown, mouseMove, mousePrs, mouseRls, keyPrs, recv, windowResize, shutdown };
 
-	inline EventType& getType() { return type; }
+	Event() = default;
+	Event(Type type) :type(type) {}
+
+	inline Type& getType() { return type; }
 protected:
-	EventType type;
+	Type type;
 };
 
 /* Mouse Move Event ****************************************************/
@@ -32,7 +25,7 @@ class MouseMoveEvent :public Event
 {
 public:
 	MouseMoveEvent(int x, int y, int offsetX, int offsetY, bool isMousePrs) 
-		: Event(EventType::mouseMove), isMousePrs(isMousePrs), pos({ x,y }), offset({ offsetX,offsetY }) {}
+		: Event(Event::mouseMove), isMousePrs(isMousePrs), pos({ x,y }), offset({ offsetX,offsetY }) {}
 
 	inline bool& getIsPrs() { return isMousePrs; }
 	inline int& getMouseX() { return pos.x; }
@@ -54,7 +47,7 @@ private:
 class MousePrsEvent :public Event
 {
 public:
-	MousePrsEvent(int x, int y, WORD botton) : Event(EventType::mousePrs), pos({ x,y }), botton(botton) {}
+	MousePrsEvent(int x, int y, WORD botton) : Event(Event::mousePrs), pos({ x,y }), botton(botton) {}
 	inline int& getMouseX() { return pos.x; }
 	inline int& getMouseY() { return pos.y; }
 
@@ -69,7 +62,7 @@ private:
 class MouseRlsEvent :public Event
 {
 public:
-	MouseRlsEvent(int x, int y, WORD botton) : Event(EventType::mouseRls), pos({ x,y }), botton(botton) {}
+	MouseRlsEvent(int x, int y, WORD botton) : Event(Event::mouseRls), pos({ x,y }), botton(botton) {}
 	inline int& getMouseX() { return pos.x; }
 	inline int& getMouseY() { return pos.y; }
 
@@ -98,7 +91,7 @@ enum class KeySet {
 class KeyPrsEvent :public Event
 {
 public:
-	inline KeyPrsEvent(WORD key) : Event(EventType::keyPrs), key(key) {}
+	inline KeyPrsEvent(WORD key) : Event(Event::keyPrs), key(key) {}
 
 	inline char getChar() { return toChar(key); }
 	inline KeySet getKey() { return toKeySet(key); }
@@ -234,7 +227,7 @@ class WindowResizeEvent :public Event
 {
 public:
 	WindowResizeEvent(Pos originPos, Size originSize, Pos pos, Size size) 
-		: Event(EventType::windowResize), originPos(originPos), originSize(originSize), pos(pos), size(size) {}
+		: Event(Event::windowResize), originPos(originPos), originSize(originSize), pos(pos), size(size) {}
 
 	inline const Pos& getPos() { return pos; }
 	inline const Size& getSize() { return size; }
@@ -250,5 +243,5 @@ private:
 class ShutdownEvent :public Event
 {
 public:
-	ShutdownEvent() : Event(EventType::shutdown) {}
+	ShutdownEvent() : Event(Event::shutdown) {}
 };

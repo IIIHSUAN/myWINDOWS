@@ -2,7 +2,7 @@
 
 bool App::onEvent(Event & e)
 {
-	if (e.getType() == EventType::shutdown)
+	if (e.getType() == Event::shutdown)
 		isRun = false;
 
 	for (auto window = windowList.rbegin(); window != windowList.rend();)

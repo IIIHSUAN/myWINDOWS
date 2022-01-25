@@ -72,6 +72,11 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 	bAnimate->onclick([this]() {
 		lTime->toggleAnimateStatus();
 		bSettings->toggleAnimateStatus();
+
+		for (auto& App : System::get().getAppList())
+			for (auto& window : App->getWindowList())
+				if (window->getType() == WindowCollection::devTool)
+					((DevToolWindow&)*window).toggleTransparent();
 		return true;
 	});
 
@@ -99,7 +104,7 @@ void DesktopWindow::a()
 {
 	lTime->animate(Animate({ Left(20,vw,relative),Bottom(5,px,absolute) }, 500), [this]() {
 		lTime->setZindex(0);
-		lTime->animate(Animate({ Left(10,vw,relative),Bottom(50,vh,relative) }, 500), [this]() {
+		lTime->animate(Animate({ Right(20,vw,relative),Bottom(50,vh,relative) }, 500), [this]() {
 			lTime->setZindex(FRONT(0));
 			a();
 		});
