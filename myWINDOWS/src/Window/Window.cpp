@@ -1,18 +1,18 @@
 ﻿#include "Window.h"
 #include "System/IO.h"
 
-Window::Window(int _id, std::wstring & _name, Pos & _pos, Size & _size, const wchar_t flushChar, WindowCollection window)
-	: id(_id), name(_name), pos(_pos), size(_size), window(window)
+Window::Window(std::wstring _name, Pos _pos, Size _size, const wchar_t flushChar, WindowCollection window)
+	: name(_name), title(_name), pos(_pos), size(_size), window(window)
 {
 	size.width = min(size.width, MY_WINDOW_WIDTH), size.height = min(size.height, MY_WINDOW_HEIGHT);
-	pos.y = max(min(pos.y, MY_WINDOW_HEIGHT - 2), 0);
+	pos.x = max(min(pos.x, MY_WINDOW_WIDTH - 2), 0), pos.y = max(min(pos.y, MY_WINDOW_HEIGHT - 2), 0);
 
 	canvas = Canvas(pos, size, true, flushChar);
 }
 
 bool Window::onEvent(Event & e)
 {
-	bool isHandled = false;  // isHandled
+	bool isHandled = false;
 	switch (e.getType())
 	{
 	case Event::mouseMove:
@@ -28,6 +28,10 @@ bool Window::onEvent(Event & e)
 		isHandled |= _onKeyPrs((KeyPrsEvent&)e);
 		break;
 	case Event::recv:
+		_onRecv((RecvEvent&)e);
+		break;
+	case Event::resize:
+		_onResize((ResizeEvent&)e);
 		break;
 	case Event::shutdown:
 		isRun = false;
@@ -36,68 +40,20 @@ bool Window::onEvent(Event & e)
 	return isHandled;
 }
 
-bool Window::elementsOnEvent(Event & e)
-{
-	// Elements
-	bool isHandled = false, isRefresh = false;
-	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
-
-	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
-	{
-		switch (e.getType())  // pass Event "by value"
-		{
-		case Event::mouseMove:
-			isHandled = (*ele)->onMouseMove((MouseMoveEvent&)e);
-			mouseInfo.handledElementInd = isHandled ? unsigned int(std::distance(elementsList.begin(), ele.base())) : 0;
-			mouseInfo.setLast({ Mouse::get().X,Mouse::get().Y });
-			break;
-		case Event::mousePrs:
- 			isHandled = (*ele)->onMousePrs((MousePrsEvent&)e);
-			break;
-		case Event::mouseRls:
-			isHandled = (*ele)->onMouseRls((MouseRlsEvent&)e);
-			break;
-		case Event::keyPrs:
-			isHandled = (*ele)->onKeyPrs((KeyPrsEvent&)e);
-			break;
-		case Event::recv:
-			break;
-		case Event::windowResize:
-			(*ele)->onWindowResize((WindowResizeEvent&)e);
-			isRefresh = true;
-			break;
-		case Event::shutdown:
-			break;
-		}
-		
-		if ((*ele)->pendingUpdate() && (*ele)->getVisible())
-		{
-			isNeedUpdate = true;
-			frontRenderEle = std::next(ele.base(), -1);
-		}
-
-		if (isHandled)
-			break;
-	}
-
-	if (isRefresh)
-		refresh();
-	else
-		// render from front Elements
-		for (auto ele2 = frontRenderEle; ele2 != elementsList.end(); ele2++)
-			canvas.renderWith((*ele2)->getCanvas());
-
-	return isHandled;
-}
-
-void Window::_onRecv(std::string str)
+void Window::_onRecv(RecvEvent e)
 {
 }
 bool Window::_onMouseMove(MouseMoveEvent e)
 {
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 	if (!(e.getMouseX() >= 0 && e.getMouseX() < size.width && e.getMouseY() >= 0 && e.getMouseY() < size.height))
+	{
+		mouseInfo.isFocus = false;
 		return false;
+	}
+	else
+		isNeedUpdate = true, 
+		mouseInfo.isFocus = true, mouseInfo.last.x = e.getMouseX() + e.getOffsetX(), mouseInfo.last.y = e.getMouseY() + e.getOffsetY();
 
 	if (!e.getIsPrs())
 	{
@@ -115,7 +71,7 @@ bool Window::_onMouseMove(MouseMoveEvent e)
 		) && direction)
 	{
 		if (!(size.width < 25 && e.getMouseX() > 0 && e.getMouseX() < size.width) &&
-			!(size.width >= MY_WINDOW_WIDTH && !(e.getMouseX() > 0 && e.getMouseX() < size.width)))
+			!(size.width >= MY_WINDOW_WIDTH && !(e.getMouseX() + e.getOffsetX() > 0 && e.getMouseX() + e.getOffsetX() < size.width)))
 		{
 			if (direction == 1 || direction == 4)  // left
 				pos.x += e.getOffsetX(), size.width -= e.getOffsetX();
@@ -123,14 +79,13 @@ bool Window::_onMouseMove(MouseMoveEvent e)
 				size.width += e.getOffsetX();
 		}
 		if (!(size.height < 5 && e.getMouseY() > 0 && e.getMouseY() < size.height) &&
-			!(size.height >= MY_WINDOW_HEIGHT && !(e.getMouseY() > 0 && e.getMouseY() < size.height)))
+			!(size.height >= MY_WINDOW_HEIGHT && !(e.getMouseY() + e.getOffsetY() > 0 && e.getMouseY() + e.getOffsetY() < size.height)))
 		{
 			if (direction <= 2)  // top
 				pos.y += e.getOffsetY(), size.height -= e.getOffsetY();
 			else  // bottom
 				size.height += e.getOffsetY();
 		}
-		
 
 		WindowResizeEvent re(canvas.getPos(), canvas.getSize(), pos, size);
 
@@ -138,6 +93,7 @@ bool Window::_onMouseMove(MouseMoveEvent e)
 		elementsOnEvent(re);
 
 		if (resizeCallback) resizeCallback(re);
+		isForceRefresh = true;
 		return true;
 	}
 	// move window
@@ -151,6 +107,7 @@ bool Window::_onMouseMove(MouseMoveEvent e)
 		elementsOnEvent(re);
 
 		if (resizeCallback) resizeCallback(re);
+		isForceRefresh = true;
 		return true;
 	}
 
@@ -164,10 +121,13 @@ bool Window::_onMousePrs(MousePrsEvent e)
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 	if (e.getMouseX() < 0 || e.getMouseX() > size.width || e.getMouseY() < 0 || e.getMouseY() > size.height)
 		return false;
+	else
+		isNeedUpdate = true;
 
 	// click close
 	if ((e.getMouseY() == 0) && (e.getMouseX() > size.width - 6 && e.getMouseX() < size.width - 2)) {
-		isRun = false, isNeedUpdate = true;	return true;
+		isRun = false, isForceRefresh = true;
+		return true;
 	}
 	// click corner
 	if ((e.getMouseX() == 0 || e.getMouseX() == size.width - 1) && (e.getMouseY() == 0 || e.getMouseY() == size.height - 1) && (mouseInfo.isPrsCorner = true))
@@ -186,7 +146,8 @@ bool Window::_onMouseRls(MouseRlsEvent e)
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 	if (e.getMouseX() < 0 || e.getMouseX() > size.width || e.getMouseY() < 0 || e.getMouseY() > size.height)
 		return false;
-
+	else
+		isNeedUpdate = true;
 
 	elementsOnEvent(e);
 
@@ -196,10 +157,87 @@ bool Window::_onMouseRls(MouseRlsEvent e)
 bool Window::_onKeyPrs(KeyPrsEvent e)
 {
 	bool isHandled = false;
-	isHandled = elementsOnEvent(e);
+	elementsOnEvent(e);
 
 	if (keyPrsCallback) isHandled |= keyPrsCallback(e);
 	return isHandled;
+}
+
+void Window::_onResize(ResizeEvent e)
+{
+	canvas.resizeRawData();
+	for (auto& ele : elementsList)
+		ele->getCanvas().resizeRawData();
+
+	WindowResizeEvent re(canvas.getPos(), canvas.getSize(), pos, size);
+	elementsOnEvent(re);
+	isForceRefresh = true;
+}
+
+void Window::elementsOnEvent(Event & e)  // from _on... (Window default EventFunc)
+{
+	bool isHandled = false;
+
+	for (auto& ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
+	{
+		switch (e.getType())  // pass "Event" by "value"
+		{
+		case Event::mouseMove:
+			isHandled = (*ele)->onMouseMove((MouseMoveEvent&)e);
+			mouseInfo.handledElementInd = isHandled ? unsigned int(std::distance(elementsList.begin(), ele.base())) : 0;
+			mouseInfo.setLast({ MyMouse::get().X,MyMouse::get().Y });
+			break;
+		case Event::mousePrs:
+			isHandled = (*ele)->onMousePrs((MousePrsEvent&)e);
+			break;
+		case Event::mouseRls:
+			isHandled = (*ele)->onMouseRls((MouseRlsEvent&)e);
+			break;
+		case Event::keyPrs:
+			isHandled = (*ele)->onKeyPrs((KeyPrsEvent&)e);
+			break;
+		case Event::recv:
+			break;
+		case Event::windowResize:
+			(*ele)->onWindowResize((WindowResizeEvent&)e);
+			break;
+		case Event::shutdown:
+			break;
+		}
+
+		if (isHandled)
+			break;
+	}
+}
+
+void Window::refresh()
+{
+	canvas.flush();
+
+	// render Elements
+	for (auto& ele = elementsList.begin(); ele != elementsList.end(); ele++)
+		canvas.renderWith((*ele)->getCanvas());
+
+	canvas.frame();
+	canvas.line(3, 0, L"  " + title + L"  "), canvas.line(size.width - 5, 0, L"  x ");
+}
+Status Window::pollingUpdate()
+{
+	Status status = Status::none, eleStatus = Status::none, callbackStatus = Status::none;
+
+	eleStatus = elementsPollingUpdate();
+	if (pollingCallback) callbackStatus = pollingCallback();
+
+	if (eleStatus >= Status::needUpdate || callbackStatus >= Status::needUpdate || isNeedUpdate)
+		status = Status::needUpdate;
+	if (isForceRefresh)
+		status = Status::refresh;
+
+	if (isNeedUpdate || isForceRefresh || eleStatus == Status::refresh || callbackStatus == Status::refresh)
+		refresh();
+
+	isNeedUpdate = false, isForceRefresh = false;
+	return status;
 }
 
 void Window::zindex(unsigned int& ind, unsigned int& ele_zindex)
@@ -212,15 +250,14 @@ void Window::zindex(unsigned int& ind, unsigned int& ele_zindex)
 	auto re = std::next(elementsList.begin(), ele_zindex + (ind < ele_zindex));
 	elementsList.splice(it, elementsList, rb, re);
 }
-
-void Window::adjustZindex()
+void Window::elementsAdjustZindex()
 {
 	unsigned int ind = 0; bool isAjustBack = false;
-	for (auto ele = elementsList.begin(); ele != elementsList.end();)
+	for (auto& ele = elementsList.begin(); ele != elementsList.end();)
 	{
 		if (isAjustBack && !(*ele)->isForceZindex)
 			(*ele)->setZindex(ind);
-		else if ((*ele)->pollingZindex() && ind != (*ele)->zindex)
+		else if ((*ele)->pollingZindex() && ind != (*ele)->zindex && ind != elementsList.size())
 		{
 			if (ind < (*ele)->zindex)  // origin less than target
 			{
@@ -231,62 +268,39 @@ void Window::adjustZindex()
 				zindex(ind, (*ele)->zindex), ind = (*ele)->zindex;
 
 			isAjustBack = true;
-			
+
 		}
 
 		ele++, ind++;
 	}
 }
-
-void Window::refresh()
+Status Window::elementsPollingUpdate()
 {
-	canvas.flush();
-
-	// render Elements
-	for (auto ele = elementsList.begin(); ele != elementsList.end(); ele++)
-		canvas.renderWith((*ele)->getCanvas());
-
-	canvas.frame();
-	setTitle(name), canvas.line(size.width - 5, 0, L"  x ");
-}
-
-bool Window::pollingUpdate()
-{
-	elementsUpdate();
-
-	if (pollingCallback) pollingCallback();
-
-	bool b = isNeedUpdate; isNeedUpdate = false; return b;
-}
-
-void Window::elementsUpdate()
-{
+	Status status = Status::none;
 	bool isRefresh = false;
-	PollingStatus pollingStatus;
+	std::list<std::shared_ptr<Elements>>::iterator baseUpdateEle = elementsList.end();
 
 	// adjust zindex first
-	adjustZindex();
+	elementsAdjustZindex();
+
 	
 	// pollingUpdate
-	std::list<std::shared_ptr<Elements>>::iterator frontRenderEle = elementsList.end();
-	for (auto ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
+	for (auto& ele = elementsList.rbegin(); ele != elementsList.rend(); ele++)
 	{
-		pollingStatus = (*ele)->onPollingUpdate(mouseInfo);
-		if (pollingStatus == PollingStatus::needUpdate)
-		{
-			if ((*ele)->getVisible())
-				isNeedUpdate |= true, frontRenderEle = std::next(ele.base(), -1);
-		}
-		else if (pollingStatus == PollingStatus::refresh)
-			isRefresh |= true;
+		status = (*ele)->onPollingUpdate(mouseInfo);
+
+		if (status == Status::refresh)
+			isRefresh = true;
+		else if (status == Status::needUpdate && (*ele)->getVisible())
+			baseUpdateEle = std::next(ele.base(), -1);
 	}
 
 	if (isRefresh)
-		refresh();
+		return Status::refresh;
+	// render from base Element
 	else
-	{
-		// render from front Elements
-		for (auto ele2 = frontRenderEle; ele2 != elementsList.end(); ele2++)
+		for (auto ele2 = baseUpdateEle; ele2 != elementsList.end(); ele2++)
 			canvas.renderWith((*ele2)->getCanvas());
-	}
+
+	return status;
 }

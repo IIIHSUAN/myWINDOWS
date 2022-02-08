@@ -2,24 +2,21 @@
 
 #include "Graphics/Struct.h"
 
-typedef unsigned short WORD;
-
-enum class PollingStatus { none, handled, needUpdate, refresh };
+enum class Status { none, handled, needUpdate, refresh };
 
 class Event
 {
 public:
-	enum Type { unknown, mouseMove, mousePrs, mouseRls, keyPrs, recv, windowResize, shutdown };
+	enum Type { unknown, mouseMove, mousePrs, mouseRls, keyPrs, recv, resize, windowResize, shutdown };
 
-	Event() = default;
 	Event(Type type) :type(type) {}
-
+	
 	inline Type& getType() { return type; }
 protected:
-	Type type;
+	Type type = unknown;
 };
 
-/* Mouse Move Event ****************************************************/
+/* MyMouse Move Event ****************************************************/
 
 class MouseMoveEvent :public Event
 {
@@ -42,34 +39,34 @@ private:
 	bool isMousePrs;
 };
 
-/* Mouse Press Event ****************************************************/
+/* MyMouse Press Event ****************************************************/
 
 class MousePrsEvent :public Event
 {
 public:
-	MousePrsEvent(int x, int y, WORD botton) : Event(Event::mousePrs), pos({ x,y }), botton(botton) {}
+	MousePrsEvent(int x, int y, PollingInput botton) : Event(Event::mousePrs), pos({ x,y }), botton(botton) {}
 	inline int& getMouseX() { return pos.x; }
 	inline int& getMouseY() { return pos.y; }
+	inline PollingInput& getBotton() { return botton; }
 
 	inline void setPos(Pos _pos) { pos = _pos; }
 private:
 	Pos pos;
-	WORD botton;
+	PollingInput botton;
 };
 
-/* Mouse Release Event ****************************************************/
+/* MyMouse Release Event ****************************************************/
 
 class MouseRlsEvent :public Event
 {
 public:
-	MouseRlsEvent(int x, int y, WORD botton) : Event(Event::mouseRls), pos({ x,y }), botton(botton) {}
+	MouseRlsEvent(int x, int y) : Event(Event::mouseRls), pos({ x,y }) {}
 	inline int& getMouseX() { return pos.x; }
 	inline int& getMouseY() { return pos.y; }
 
 	inline void setPos(Pos _pos) { pos = _pos; }
 private:
 	Pos pos;
-	WORD botton;
 };
 
 /* Key Press Event ****************************************************/
@@ -91,12 +88,12 @@ enum class KeySet {
 class KeyPrsEvent :public Event
 {
 public:
-	inline KeyPrsEvent(WORD key) : Event(Event::keyPrs), key(key) {}
+	inline KeyPrsEvent(unsigned short key, WCHAR unicodeChar) : Event(Event::keyPrs), key(key), unicodeChar(unicodeChar) {}
 
-	inline char getChar() { return toChar(key); }
+	inline WCHAR getChar() { return unicodeChar; }
 	inline KeySet getKey() { return toKeySet(key); }
 
-	static inline char toChar(WORD& key) {
+	static inline char toChar(unsigned short& key) {  // deprecated
 		switch (key)
 		{
 		default: return char(key);
@@ -117,7 +114,7 @@ public:
 		case 0x6F: return '/';
 		}
 	}
-	static inline KeySet toKeySet(WORD& key) {
+	static inline KeySet toKeySet(unsigned short& key) {
 		switch (key)
 		{
 		default: return KeySet::unknown;
@@ -218,7 +215,24 @@ public:
 		}
 	}
 private:
-	WORD key;
+	unsigned short key;
+	WCHAR unicodeChar;
+};
+
+/* Resize Event ****************************************************/
+
+class ResizeEvent :public Event
+{
+public:
+	ResizeEvent(short width, short height, float rWidth, float rHeight) : Event(Event::resize), width(width), height(height), rWidth(rWidth), rHeight(rHeight) {}
+	
+	inline short getWidth() { return width; }
+	inline short getHeight() { return height; }
+	inline float getWidthRatio() { return rWidth; }
+	inline float getHeightRatio() { return rHeight; }
+private:
+	short width, height;
+	float rWidth, rHeight;
 };
 
 /* Window Resize Event (only for Window dispatch) ****************************************************/
@@ -236,6 +250,12 @@ public:
 private:
 	Pos originPos, pos;
 	Size originSize, size;
+};
+
+/* Network Recieve Event ****************************************************/
+
+class RecvEvent :public Event
+{
 };
 
 /* Shut Down Event ****************************************************/

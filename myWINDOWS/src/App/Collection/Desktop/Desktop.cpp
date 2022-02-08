@@ -8,12 +8,12 @@ void DesktopWindow::b()
 {
 	static bool isFront = false;
 	isFront = !isFront;
-	bSettings->animate(Animate({ Left(50,vw),Top(50,vh) }, { Width(50,vw),Height(50,vh) }, 250, Easing::easeInOutCubic), [this]() {
+	bSettings->animate(Animate({ Left(50,vw),Top(50,vh) }, { Width(50,vw),Height(50,vh) }, 1000, Easing::easeInQuint), [this]() {
 		bSettings->setZindex(isFront ? FRONT(0) : 3);
 		bSettings->getAnimate().sleep(500);
 
-		bSettings->animate(Animate({ Right(50,vw),Bottom(50,vh) }, { Width(50,vw),Height(50,vh) }, 250, Easing::easeInOutCubic), [this]() {
-			bSettings->setZindex(isFront ? FRONT(0) : 0);
+		bSettings->animate(Animate({ Left(0),Bottom(50,vh) }, { Width(30,px),Height(30,vh) }, 1000, Easing::easeOutQuint), [this]() {
+			bSettings->setZindex(0);
 			b();
 			bSettings->getAnimate().sleep(250);
 			lTime->toggleAnimateStatus();
@@ -21,14 +21,14 @@ void DesktopWindow::b()
 	});
 }
 
-DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
-	: Window(_id, _name, _pos, _size, L'░')
+DesktopWindow::DesktopWindow(std::wstring _name, Pos _pos, Size _size)
+	: Window(_name, _pos, _size, L'░')
 {
 	/* Elements ************************************************************/
 
-	push_elements(iDoge, Image(CharImage({ backgroundData , {Left(15,vw),Bottom(1,px)}, {29,11} }), *this));
+	push_elements(iDoge, Image(CharImage({ backgroundData , {Left(15,vw),Top(1,px)}, {29,11} }), *this));
 
-	push_elements(lTime, Label(L"Time", { Left(10,vh),Top(8,px) },  *this, false));
+	push_elements(lTime, Label(L"Time", { Right(10,vw),Top(2,px) }, *this, false));
 	lTime->animate(Animate({ Left(15),Bottom(1) }, 500), [this]() {
 		a();
 	});
@@ -41,14 +41,17 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 	});
 	b();
 	bSettings->onhover([this]() {
-		if (bSettings->getInfo().mouseHover == ElementsInfo::active)
-			bSettings->setString(L" Set Parameters ", L'#'), bSettings->isAnimatePause(true);
-		else
-			bSettings->setString(L"Settings"), bSettings->isAnimatePause(false);
+		bSettings->isAnimatePause(bSettings->getInfo().mouseHover == ElementsInfo::active);
 		return true;
 	});
 
-	push_elements(bPainter, Button(L"Painter", { Right(3),Top(25,vh) },  *this, true));
+	push_elements(bDesktop, Button(L"Desktop", { Right(3),Top(20,vh) }, *this, true));
+	bDesktop->onclick([]() {
+		System::get().createApp(AppCollection::Desktop);
+		return true;
+	});
+
+	push_elements(bPainter, Button(L"Painter", { Right(3),Top(40,vh) },  *this, true));
 	bPainter->onhover([this]() {
 		bPainter->setString(bPainter->getInfo().mouseHover == ElementsInfo::active ? L"Open Painter ?" : L"Painter");
 		return true;
@@ -58,7 +61,7 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 		return true;
 	});
 
-	push_elements(bChess, Button(L"Chess", { Right(3),Top(50,vh) },  *this, true));
+	push_elements(bChess, Button(L"Chess", { Right(3),Top(60,vh) },  *this, true));
 	bChess->onhover([this]() {
 		if (bChess->getInfo().mouseHover == ElementsInfo::active) bChess->setString(L"Play ?", L'|'); else bChess->setString(L"Chess");
 		return true;
@@ -84,7 +87,7 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 
 	setPollingCallback([this]() {
 		static int i = 0;
-		i = ++i % int(MY_UPDATE_FREQ);
+		i = ++i % max(int(MY_UPDATE_FREQ), 1);
 
 		std::time_t now = std::time(0);
 		struct tm t;
@@ -97,6 +100,33 @@ DesktopWindow::DesktopWindow(int _id, std::wstring _name, Pos _pos, Size _size)
 			(int(i*MY_UPDATE_PERIOD) / 10 < 10 ? L":0" : L":") + std::to_wstring(int(i*MY_UPDATE_PERIOD) / 10);
 
 		lTime->setString(str);
+
+		//
+		Pos4 iDogePos4 = iDoge->getCanvas().getPos4();
+		bool opcode = false;
+		int speed = POLLING_MAP(shift) ? 3 : POLLING_MAP(ctrl) ? 1 : 2;
+
+		if (POLLING_MAP(W))
+			iDogePos4.vAttr.value -= speed, opcode = true;
+		if (POLLING_MAP(A))
+			iDogePos4.hAttr.value -= speed, opcode = true;
+		if (POLLING_MAP(S))			 
+			iDogePos4.vAttr.value += speed, opcode = true;
+		if (POLLING_MAP(D))			 
+			iDogePos4.hAttr.value += speed, opcode = true;
+		if (POLLING_MAP(spacebar))
+			iDogePos4.vAttr.value -= 10, iDoge->animate(Animate(iDogePos4, 250), [this]() { 
+				Pos4 iDogePos4 = iDoge->getCanvas().getPos4();
+				iDogePos4.vAttr.value += 10;
+				iDoge->animate(Animate(iDogePos4, 250));
+			});
+
+		if (opcode)
+		{
+			iDoge->setPos4(iDogePos4);
+			return Status::refresh;
+		}
+		return Status::none;
 	});
 }
 

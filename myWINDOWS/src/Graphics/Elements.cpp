@@ -1,6 +1,5 @@
 ﻿#include "Elements.h"
 
-#include <Windows.h>
 #include <thread>
 
 #include "System/System.h"
@@ -49,7 +48,7 @@ bool Elements::_onMouseRls(MouseRlsEvent & e)
 	e.setPos({ e.getMouseX() - pos.x , e.getMouseY() - pos.y });
 
 	bool isCallback = false;
-	if (e.getMouseX() >= 0 && e.getMouseX() < size.width&&e.getMouseY() >= 0 && e.getMouseY() < size.height
+	if (e.getMouseX() >= 0 && e.getMouseX() < size.width && e.getMouseY() >= 0 && e.getMouseY() < size.height
 		&& info.mousePressed == ElementsInfo::active)
 		info.mouseClick = ElementsInfo::active, isCallback = true;
 
@@ -75,21 +74,26 @@ void Elements::_onWindowResize(WindowResizeEvent & e)
 		setSize2(canvas.getSize2()), setPos4(canvas.getPos4());
 }
 
-PollingStatus Elements::onPollingUpdate(WindowMouseInfo& mouseInfo)
+Status Elements::onPollingUpdate(WindowMouseInfo& mouseInfo)
 {
-	PollingStatus pollingStatus = isNeedUpdate ? PollingStatus::needUpdate : PollingStatus::none;
+	Status status = isNeedUpdate ? Status::needUpdate : Status::none;
 
-	if (animFunc && anim.status == Animate::play && animFunc())
+	if (animFunc)
 	{
-		pollingStatus = PollingStatus::refresh;
-		if (mouseInfo.last.x == Mouse::get().X && mouseInfo.last.y == Mouse::get().Y &&  // still on this window
-			zindex > mouseInfo.handledElementInd)
-			onMouseMove(MouseMoveEvent(mouseInfo.last.x, mouseInfo.last.y, 0, 0, false));  // virtual MouseMoveEvent
-		if (animCallback) animCallback(), animCallback = nullptr;
+		if (mouseInfo.isFocus && zindex > mouseInfo.handledElementInd)  // virtual MouseMoveEvent (for last Pos & Size)
+			onMouseMove(MouseMoveEvent(mouseInfo.last.x, mouseInfo.last.y, 0, 0, false));
+
+		if (anim.status == Animate::play && animFunc())
+		{
+			status = Status::refresh;
+			if (animCallback) animCallback(), animCallback = nullptr;
+		}
 	}
 
-	if (pollingCallback && pollingCallback()) pollingStatus = PollingStatus::needUpdate;
-	isNeedUpdate = false; return pollingStatus;
+	if (pollingCallback && pollingCallback() && status < Status::needUpdate)
+		status = Status::needUpdate;
+
+	isNeedUpdate = false; return status;
 }
 
 void Elements::animate(Animate _anim, std::function<void()> callback)
@@ -97,7 +101,6 @@ void Elements::animate(Animate _anim, std::function<void()> callback)
 	float sleepTime = anim.sleepTime;
 	anim = _anim;
 	anim.sleepTime = sleepTime;
-	anim.dt = System::get().getPollingPeriod();
 	// size
 	anim.startSize2 = canvas.getSize2();
 	anim.startSize.width = canvas.convertSize2width(anim.startSize2, parent), anim.startSize.height = canvas.convertSize2height(anim.startSize2, parent);
@@ -109,6 +112,7 @@ void Elements::animate(Animate _anim, std::function<void()> callback)
 	anim.callback = callback;
 
 	animFunc = [this]() {
+		anim.dt = MY_UPDATE_PERIOD;
 		if (anim.sleepTime > 0)
 		{
 			anim.sleepTime -= anim.dt;
@@ -249,16 +253,19 @@ Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, Window& window, int len, boo
 	flush();
 
 	// pollingCallback
-	int timeCount = 0;
-	setPollingCallback([&timeCount, this]() {
-		timeCount = ++timeCount % int(MY_UPDATE_FREQ);
-
-		if (isFlash && (timeCount == 0 || timeCount == int(MY_UPDATE_FREQ / 2)))
+	setPollingCallback([this]() {
+		
+		if (isFlash)
 		{
-			isWhite = !isWhite, isWhite ? canvas.flush(L'█') : flush();
-			return true;
-		}
+			timeCount += short(MY_UPDATE_PERIOD);
 
+			if (timeCount > 500)
+			{
+				timeCount = 0;
+				isWhite = !isWhite, isWhite ? canvas.flush(L'█') : flush();
+				return true;
+			}
+		}
 		return false;
 	});
 }
@@ -268,7 +275,7 @@ void Inputbox::flush_impl(wchar_t flushChar)
 	flushChar ? canvas.flush(flushChar) : canvas.flush();
 
 	std::wstring cstr = L"  " + str;
-	canvas.line(1, 1, cstr.c_str(), min(int(cstr.length()), len-2));
+	canvas.line(1, 1, cstr.c_str(), min(int(cstr.length()), len - 2));
 }
 
 bool Inputbox::onMouseMove_impl(MouseMoveEvent & e)

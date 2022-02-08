@@ -16,7 +16,7 @@ class Elements;
 struct WindowMouseInfo
 {
 	unsigned int handledElementInd = 0;  // for Element animate use
-	bool isPrsFrame = false, isPrsCorner = false;
+	bool isPrsFrame = false, isPrsCorner = false, isFocus = false;
 	Pos last;
 	inline void setLast(Pos&& pos) { last = pos; }
 };
@@ -25,7 +25,7 @@ enum class WindowCollection { unknown, default, devTool };
 class Window
 {
 public:
-	Window(int _id, std::wstring& _name, Pos& _pos, Size& _size, const wchar_t flushChar = WHITESPACE_WCHAR, WindowCollection window = WindowCollection::default);
+	Window(std::wstring _name, Pos _pos, Size _size, const wchar_t flushChar = WHITESPACE_WCHAR, WindowCollection window = WindowCollection::default);
 
 	friend class App;
 	friend class Elements;
@@ -40,7 +40,7 @@ public:
 	inline std::list<std::shared_ptr<Elements>>& getElementsList() { return elementsList; }
 	inline const bool& getIsRun() { return isRun; }
 
-	inline void setTitle(std::wstring& str) { canvas.line(3, 0, L"  " + str + L"  "); }
+	inline void setTitle(std::wstring& str) { title = str; }
 	inline void setId(unsigned int i) { id = i; }
 
 	inline void setRecieveCallback	 (std::function<void(std::string)> func)		{ recvCallback = func; };
@@ -48,17 +48,17 @@ public:
 	inline void setMousePrsCallback	 (std::function<void(MousePrsEvent)> func)		{ mousePrsCallback = func; };
 	inline void setKeyPrsCallback	 (std::function<bool(KeyPrsEvent)> func)		{ keyPrsCallback = func; };
 	inline void setResizeCallback	 (std::function<void(WindowResizeEvent)> func)	{ resizeCallback = func; };
-	inline void setPollingCallback	 (std::function<void()> func)					{ pollingCallback = func; };
+	inline void setPollingCallback	 (std::function<Status(void)> func)				{ pollingCallback = func; };
 
-	bool pollingUpdate();
+	Status pollingUpdate();
 
+	void setIsNeedUpdate(bool b) { isNeedUpdate |= b; }
 protected:
 	inline void pushElements(std::shared_ptr<Elements>&& ele_ptr) {
-		ele_ptr->setZindex(int(elementsList.size())), ele_ptr->setId(elementsIdNum++), elementsList.emplace_back(ele_ptr), elementsUpdate();
+		ele_ptr->setZindex(int(elementsList.size())), ele_ptr->setId(elementsIdNum++), elementsList.emplace_back(ele_ptr), isNeedUpdate |= true;
 	}
-	int getElementsListSize() { return int(elementsList.size()); }
-
-	void refresh();
+	inline int getElementsListSize() { return int(elementsList.size()); }
+	inline void setNeedUpdate() { isNeedUpdate |= true; }
 private:
 	WindowCollection window;
 	std::wstring name, title;
@@ -66,34 +66,35 @@ private:
 	Pos pos;    // be sure change canvas'
 	Size size;  // be sure change canvas'
 	Canvas canvas;
+	bool isNeedUpdate = false, isRefresh = false, isForceRefresh = false, isRun = true;
 	WindowMouseInfo mouseInfo;
 
 	// [Elements] held by custom sub class
-	bool isNeedUpdate = false, isRun = true;
 	unsigned int elementsIdNum = 0;
 	std::list<std::shared_ptr<Elements>>elementsList;
-	void elementsUpdate();
+	Status elementsPollingUpdate();
 
 	void zindex(unsigned int& ind, unsigned int& ele_zindex);
-	void adjustZindex();
+	void elementsAdjustZindex();
 
 	bool onEvent(Event& e);
-	bool elementsOnEvent(Event& e);
-	
-	
+	void elementsOnEvent(Event& e);
 
+	void refresh();  // pollingUpdate use only
+	
 	std::function<void(MouseMoveEvent)> mouseMoveCallback = nullptr;
 	std::function<void(MousePrsEvent)> mousePrsCallback = nullptr;
 	std::function<void(MouseRlsEvent)> mouseRlsCallback = nullptr;
 	std::function<void(WindowResizeEvent)> resizeCallback = nullptr;
 	std::function<bool(KeyPrsEvent)> keyPrsCallback = nullptr;
 	std::function<void(std::string)> recvCallback = nullptr;
-	std::function<void()> pollingCallback = nullptr;
+	std::function<Status(void)> pollingCallback = nullptr;
 
 	// run default
 	bool _onMouseMove(MouseMoveEvent e);
 	bool _onMousePrs(MousePrsEvent e);
 	bool _onMouseRls(MouseRlsEvent e);
 	bool _onKeyPrs(KeyPrsEvent e);
-	void _onRecv(std::string str);
+	void _onResize(ResizeEvent e);
+	void _onRecv(RecvEvent e);
 };

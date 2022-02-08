@@ -8,15 +8,15 @@ class Chess;
 class ChessWindow : public Window
 {
 public:
-	ChessWindow(int _id, std::wstring _name, Pos _pos, Size _size);
+	ChessWindow(std::wstring _name, Pos _pos, Size _size);
 };
 
 
 class Chess :public App
 {
 public:
-	Chess(Pos pos = { 2,1 }) : App(AppCollection::Chess) {
-		push_window(window, ChessWindow(0, L"Chess", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 5 }));
+	Chess(Pos pos = { 2,1 }, UINT id = 0) : App(AppCollection::Chess, id) {
+		push_window(window, ChessWindow(L"Chess", pos, { MY_WINDOW_WIDTH - 15,MY_WINDOW_HEIGHT - 5 }));
 
 		//App::setPollingUpdate(true);
 		

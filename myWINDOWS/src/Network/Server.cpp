@@ -3,7 +3,7 @@
 Server::Server()
 {
 	WSAData wsaData;
-	WORD dllVersion = MAKEWORD(2, 1);  //network version
+	unsigned short dllVersion = MAKEunsigned short(2, 1);  //network version
 	if (WSAStartup(dllVersion, &wsaData) != 0)  //initial
 		return;
 	else

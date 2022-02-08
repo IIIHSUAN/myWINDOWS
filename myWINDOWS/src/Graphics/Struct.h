@@ -1,13 +1,15 @@
 #pragma once
 
+#include "System/IO.h"
+
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 /* BufferRender *********************************************************/
 
-#define MY_WINDOW_HEIGHT 29
-#define MY_WINDOW_WIDTH 100
-#define MY_WINDOW_PIXELS MY_WINDOW_HEIGHT * MY_WINDOW_WIDTH
+#define MY_WINDOW_HEIGHT Output::height
+#define MY_WINDOW_WIDTH Output::width
+#define MY_WINDOW_PIXELS MY_WINDOW_WIDTH * MY_WINDOW_HEIGHT
 
 static int index(int Y, int X)
 {

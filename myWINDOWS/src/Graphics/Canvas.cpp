@@ -21,19 +21,9 @@ void Canvas::line(int X, int Y, const wchar_t * str, const int len, bool isWhite
 
 	static int x, w;
 	x = X < 0 ? 0 : X;
-	w = X + len >= MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : len;
+	w = X + len >= MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - isFrame - X : len;
 
-	_renderLine(index(Y, x), w, str, 0, isWhitespace);  //canvas.replace(index(Y, x), w, str, 0, w);
-}
-void Canvas::line(int X, int Y, const int showLen, const wchar_t * str, const int len, bool isWhitespace)  // draw in one line
-{
-	if (Y >= MY_WINDOW_HEIGHT || Y < 0)
-		return;
-
-	static int x, w;
-	x = X < 0 ? 0 : X;
-	w = X + len >= MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : len;
-	_renderLine(index(Y, x), min(showLen, w), str, 0, isWhitespace);  //canvas.replace(index(Y, x), showLen, str, 0, w);
+	_renderLine(index(Y, x), w, std::wstring(str), 0, isWhitespace);  //canvas.replace(index(Y, x), w, str, 0, w);
 }
 void Canvas::line(int X, int Y, std::wstring s, bool isWhitespace)  // draw in one line
 {
@@ -42,12 +32,12 @@ void Canvas::line(int X, int Y, std::wstring s, bool isWhitespace)  // draw in o
 
 	static int x, w;
 	x = X < 0 ? 0 : X;
-	w = X + s.length() >= MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - X - isFrame : int(s.length());
+	w = X + s.length() >= MY_WINDOW_WIDTH - isFrame ? MY_WINDOW_WIDTH - isFrame - X : int(s.length());
 	_renderLine(index(Y, x), w, s, 0, isWhitespace);  //canvas.replace(index(Y, x), w, s, 0, w);
 }
 void Canvas::lineCenter(int X, int Y, std::wstring& str, bool isWhitespace)
 {
-	line(X - int(str.length() / 2), Y, str.c_str(), int(str.length()), isWhitespace);
+	line(X - int(str.length() / 2), Y, str, isWhitespace);
 }
 
 void Canvas::renderWith(Canvas & front)

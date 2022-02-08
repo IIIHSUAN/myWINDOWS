@@ -15,7 +15,7 @@ class Window;
 
 struct CharImage
 {
-	const wchar_t* rawData;
+	std::wstring rawData;
 	Pos4 pos4;
 	Size size;
 	bool isVisible = true;
@@ -28,18 +28,18 @@ class Canvas
 public:
 	Canvas() {}
 	Canvas(Pos pos, Size size, bool isFrame = false, wchar_t flushChar = L' ')  // for Window constructor, on absolute zero
-		: pos(pos), originPos(pos), size(size), originSize(size), isFrame(isFrame),	rawData(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar) {}
+		: pos(pos), originPos(pos), size(size), originSize(size), isFrame(isFrame),	rawData(MY_WINDOW_PIXELS, flushChar), flushChar(flushChar) {}
 
 	Canvas(Pos4 pos4, Size2 size2, Canvas& parent, bool isFrame = false, wchar_t flushChar = L' ')  // on parent zero
-		: pos4(pos4), size2(size2), isFrame(isFrame), rawData(std::wstring(MY_WINDOW_PIXELS, flushChar)), flushChar(flushChar) {
+		: pos4(pos4), size2(size2), isFrame(isFrame), rawData(MY_WINDOW_PIXELS, flushChar), flushChar(flushChar) {
 		setSize2(size2, parent), originSize = size;
 		setPos4(pos4, parent), originPos = pos;
 	}
 
+
 	void flush(wchar_t newChar = 0);
 	void frame();
 
-	void line(int X, int Y, const int showLen, const wchar_t * str, const int len, bool isWhitespace = true);
 	void line(int X, int Y, const wchar_t * str, const int len, bool isWhitespace = true);
 	void line(int X, int Y, std::wstring s, bool isWhitespace = true);
 	void lineCenter(int X, int Y, std::wstring& str, bool isWhitespace = true);
@@ -54,8 +54,9 @@ public:
 	int convertSize2width(const Size2& size2, Canvas& parent);
 	int convertSize2height(const Size2& size2, Canvas& parent);
 
-	inline void setPos(Pos _pos) { pos = _pos; }  // for window use only, others use setPos4 for pos config
-	inline void setSize(Size _size) { size = _size; }  // for window use only, others use setSize2 for size config
+	inline void setPos(Pos _pos) { pos = _pos; }  // for Window use only, others use setPos4 for pos config
+	inline void setSize(Size _size) { size = _size; }  // for Window use only, others use setSize2 for size config
+	inline void resizeRawData() { rawData.resize(MY_WINDOW_PIXELS); }
 
 	inline void setPos4(Pos4& _pos4, Canvas& parent) { pos4 = _pos4; setPos4h(parent), setPos4v(parent); }
 	inline void setPos4(Pos4&& _pos4, Canvas& parent) { pos4 = _pos4; setPos4h(parent), setPos4v(parent); }
@@ -77,7 +78,7 @@ public:
 	inline const Size& getOriginSize() { return size; }
 	inline bool& getIsFrame() { return isFrame; }
 	inline std::wstring& getRaw() { return rawData; }
-	inline const wchar_t* getRawConst() { return rawData.c_str(); }
+	inline const std::wstring& getRawConst() { return rawData; }
 
 private:
 	wchar_t flushChar;
@@ -88,7 +89,7 @@ private:
 	Size2 size2;
 	Size size, originSize;
 	
-	template<class T> void _renderLine(const int start, const int& width, T& src, const int srcStart, bool isWhitespace = false);
+	void _renderLine(const int start, const int& width, std::wstring& src, const int srcStart, bool isWhitespace = false);
 	void _renderLine(const int start, const int& width, const wchar_t src);
 
 	inline void setPos4h(Canvas& parent) { pos.x = convertPos4h(pos4, parent); }
@@ -97,18 +98,31 @@ private:
 	inline void setSize2height(Canvas& parent) { size.height = convertSize2height(size2, parent); }
 };
 
-template<class T>
-inline void Canvas::_renderLine(const int start, const int& width, T& src, const int srcStart, bool isWhitespace)
+inline void Canvas::_renderLine(const int start, const int& width, std::wstring& src, const int srcStart, bool isWhitespace)
 {
-	for (int i = 0; i < width; i++)
-		if (isWhitespace && src[srcStart + i] == TRANSPARENT_WCHAR)
-			rawData[start + i] = WHITESPACE_WCHAR;
-		else if (src[srcStart + i] != TRANSPARENT_WCHAR)
-			rawData[start + i] = src[srcStart + i];
+	try 
+	{
+		for (int i = 0; i < width; i++)
+			if (isWhitespace && src.at(srcStart + i) == TRANSPARENT_WCHAR)
+				rawData.at(start + i) = WHITESPACE_WCHAR;
+			else if (src.at(srcStart + i) != TRANSPARENT_WCHAR)
+				rawData.at(start + i) = src.at(srcStart + i);
+	}
+	catch (...) { //// need revision
+		rawData.resize(start + width), src.resize(srcStart + width);
+		throw;
+	}
 }
 
 inline void Canvas::_renderLine(const int start, const int & width, const wchar_t src)
 {
-	for (int i = 0; i < width; i++)
-		rawData[start + i] = src;
+	try 
+	{
+		for (int i = 0; i < width; i++)
+			rawData.at(start + i) = src;
+	}
+	catch (...) {
+		rawData.resize(start + width);
+		throw;
+	}
 }

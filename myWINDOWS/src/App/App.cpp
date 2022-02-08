@@ -5,34 +5,34 @@ bool App::onEvent(Event & e)
 	if (e.getType() == Event::shutdown)
 		isRun = false;
 
-	for (auto window = windowList.rbegin(); window != windowList.rend();)
-	{
-		bool ishandled = false;
+	for (auto& window = windowList.rbegin(); window != windowList.rend(); window++)
 		if ((*window)->onEvent(e))  // is handled
-			ishandled = true;
-
-		if (!(*window)->getIsRun())
-		{
-			window = std::list<std::shared_ptr<Window>>::reverse_iterator(windowList.erase(--window.base()));
-
-			if (windowList.empty())  // no window exists
-				isRun = false;
-		}
-		else if (ishandled)
 			return true;
-		else
-			window++;
-	}
 
 	return false;
 }
 
-bool App::pollingUpdate()
+Status App::pollingUpdate()
 {
-	bool b = isNeedUpdate;
-	for (auto&window : windowList)
-		b |= (*window).pollingUpdate();
+	Status tmpStatus, status = Status::none;
 
-	isNeedUpdate = false;
-	return b;
+	for (auto&window = windowList.begin(); window != windowList.end();)
+	{
+		tmpStatus = (*window)->pollingUpdate();
+		
+		if (tmpStatus > status)
+			status = tmpStatus;
+
+		if (!(*window)->getIsRun())
+		{
+			window = windowList.erase(window);
+
+			if (windowList.empty())  // no window exists
+				isRun = false;
+		}
+		else
+			window++;
+	}
+
+	return status;
 }
