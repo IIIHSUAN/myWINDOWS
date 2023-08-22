@@ -35,7 +35,6 @@ public:
 		});		
 	}
 
-	void pushElementsList(std::list<std::shared_ptr<Elements>>& elementsList);
 	template<typename T> void pushVar(std::wstring name, T& var);
 
 	inline void toggleTransparent() { isOpaque = !isOpaque; getCanvas().setFlushChar(IS_OPAQUE(isOpaque)); setNeedUpdate(); }

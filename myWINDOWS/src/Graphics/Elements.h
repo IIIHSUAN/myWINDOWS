@@ -17,7 +17,7 @@
 
 struct WindowMouseInfo;
 
-enum class ElementsType { none, Label, Button, Inputbox, Image, Paragraph };
+enum class ElementsType { none, Label, Button, Inputbox, Image, Paragraph, Div };
 struct ElementsInfo
 {
 	enum InfoType { none, active, cancel };
@@ -189,4 +189,17 @@ private:
 	bool isWhitespace;
 
 	virtual void flush_impl(wchar_t flushChar) override;
+};
+
+/* Div ****************************************************/
+
+class Div : public Elements
+{
+public:
+	Div(Pos4 pos4, Size2 size2, Window& parent, bool isFrame = false, Size padding = Size({ 0,0 }), wchar_t flushChar = TRANSPARENT_WCHAR);
+
+private:
+	Size padding;
+
+	virtual void flush_impl(wchar_t flushChar) override { }
 };

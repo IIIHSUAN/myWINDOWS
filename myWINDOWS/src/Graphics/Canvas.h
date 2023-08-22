@@ -27,10 +27,10 @@ class Canvas
 {
 public:
 	Canvas() {}
-	Canvas(Pos pos, Size size, bool isFrame = false, wchar_t flushChar = L' ')  // for Window constructor, on absolute zero
+	Canvas(Pos pos, Size size, bool isFrame = false, wchar_t flushChar = TRANSPARENT_WCHAR)  // for Window constructor, on absolute zero
 		: pos(pos), originPos(pos), size(size), originSize(size), isFrame(isFrame),	rawData(MY_WINDOW_PIXELS, flushChar), flushChar(flushChar) {}
 
-	Canvas(Pos4 pos4, Size2 size2, Canvas& parent, bool isFrame = false, wchar_t flushChar = L' ')  // on parent zero
+	Canvas(Pos4 pos4, Size2 size2, Canvas& parent, bool isFrame = false, wchar_t flushChar = TRANSPARENT_WCHAR)  // on parent zero
 		: pos4(pos4), size2(size2), isFrame(isFrame), rawData(MY_WINDOW_PIXELS, flushChar), flushChar(flushChar) {
 		setSize2(size2, parent), originSize = size;
 		setPos4(pos4, parent), originPos = pos;
@@ -90,7 +90,7 @@ private:
 	Size size, originSize;
 	
 	void _renderLine(const int start, const int& width, std::wstring& src, const int srcStart, bool isWhitespace = false);
-	void _renderLine(const int start, const int& width, const wchar_t src);
+	void _renderLineFlush(const int start, const int& width, const wchar_t src);
 
 	inline void setPos4h(Canvas& parent) { pos.x = convertPos4h(pos4, parent); }
 	inline void setPos4v(Canvas& parent) { pos.y = convertPos4v(pos4, parent); }
@@ -102,19 +102,22 @@ inline void Canvas::_renderLine(const int start, const int& width, std::wstring&
 {
 	try 
 	{
-		for (int i = 0; i < width; i++)
-			if (isWhitespace && src.at(srcStart + i) == TRANSPARENT_WCHAR)
-				rawData.at(start + i) = WHITESPACE_WCHAR;
-			else if (src.at(srcStart + i) != TRANSPARENT_WCHAR)
-				rawData.at(start + i) = src.at(srcStart + i);
+		for (int i = 0; i < width; i++) {
+			const wchar_t c = src.at(srcStart + i);
+			if (c == TRANSPARENT_WCHAR) {
+				if(isWhitespace)
+					rawData.at(start + i) = WHITESPACE_WCHAR;
+			}
+			else
+				rawData.at(start + i) = c;
+		}
 	}
-	catch (...) { //// need revision
+	catch (...) {  // !! need revision
 		rawData.resize(start + width), src.resize(srcStart + width);
-		throw;
 	}
 }
 
-inline void Canvas::_renderLine(const int start, const int & width, const wchar_t src)
+inline void Canvas::_renderLineFlush(const int start, const int & width, const wchar_t src)
 {
 	try 
 	{
@@ -123,6 +126,5 @@ inline void Canvas::_renderLine(const int start, const int & width, const wchar_
 	}
 	catch (...) {
 		rawData.resize(start + width);
-		throw;
 	}
 }

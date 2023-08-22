@@ -2,8 +2,8 @@
 
 bool App::onEvent(Event & e)
 {
-	if (e.getType() == Event::shutdown)
-		isRun = false;
+	if (e.getType() == Event::shutDown)
+		App::isRun = false;
 
 	for (auto& window = windowList.rbegin(); window != windowList.rend(); window++)
 		if ((*window)->onEvent(e))  // is handled
@@ -16,7 +16,7 @@ Status App::pollingUpdate()
 {
 	Status tmpStatus, status = Status::none;
 
-	for (auto&window = windowList.begin(); window != windowList.end();)
+	for (auto window = windowList.begin(); window != windowList.end();)
 	{
 		tmpStatus = (*window)->pollingUpdate();
 		
@@ -28,7 +28,7 @@ Status App::pollingUpdate()
 			window = windowList.erase(window);
 
 			if (windowList.empty())  // no window exists
-				isRun = false;
+				App::isRun = false;
 		}
 		else
 			window++;

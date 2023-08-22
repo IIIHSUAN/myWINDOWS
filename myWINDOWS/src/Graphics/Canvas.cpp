@@ -5,7 +5,7 @@
 void Canvas::flush(wchar_t newChar)
 {
 	for (int i = 0; i < size.height; i++)
-		_renderLine(index(i, 0), size.width, newChar ? newChar : flushChar);
+		_renderLineFlush(index(i, 0), size.width, newChar ? newChar : flushChar);
 		/*canvas.replace(
 			index(i, 0), size.width,
 			flushStr
@@ -70,7 +70,7 @@ void Canvas::renderCharImage(CharImage & src, bool isWhitespace)
 			i*(src.size.width - 1), w
 		);*/
 
-	frame();
+	//frame();
 }
 void Canvas::renderWindow(Window& window)  // with custom size
 {
@@ -130,7 +130,7 @@ void Canvas::frame()
 		for (int i = 0; i < size.height; i++)
 		{
 			if (i == 0 || i == size.height - 1)  // top & bottom frame
-				_renderLine(index(i, 0), size.width, L'\u2550');  //canvas.replace(index(i, 0), size.width, size.width, L'\u2550');
+				_renderLineFlush(index(i, 0), size.width, L'\u2550');  //canvas.replace(index(i, 0), size.width, size.width, L'\u2550');
 			rawData.at(index(i, 0)) = (i == 0 ? L'\u2554' : (i == size.height - 1) ? L'\u255A' : L'\u2551');  // left
 			rawData.at(index(i, size.width - 1)) = (i == 0 ? L'\u2557' : (i == size.height - 1) ? L'\u255D' : L'\u2551');  // right
 		}

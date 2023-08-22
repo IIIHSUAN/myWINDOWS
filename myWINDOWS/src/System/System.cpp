@@ -19,8 +19,8 @@ void System::run()
 	//createApp(AppCollection::CubeViewer);
 	createApp(AppCollection::Desktop);
 
-	pollingThread = std::thread([this]() {try { pollingUpdate(); } catch (...) { return; } });
-	inputThread = std::thread([]() {	try { Input::get().run(); } catch (...) { return; }});
+	pollingThread = std::thread([this]() {try { pollingUpdate(); } catch (...) { __debugbreak(); } });
+	inputThread = std::thread([]() { try { Input::get().run(); } catch (...) { __debugbreak(); }});
 
 	//pollingThread.join();
 	inputThread.join();
@@ -55,12 +55,15 @@ void System::createApp(AppCollection name)
 	}
 
 	runThreadList.emplace_back(std::thread([this]() {
+		App* latestApp = appList.back();
 		try {
-			appList.back()->run();  // if need update UI, use PollingUpdate
+			latestApp->run();  // if need update UI, use PollingUpdate
 		}
 		catch (...)
 		{
 			// msg here
+
+			latestApp->closeApp();
 			return;
 		}
 	}));
@@ -77,12 +80,15 @@ void System::pollingUpdate()
 		time = clock();
 
 		while (!eventQueue.empty())
-			onEvent(*eventQueue.front()),
-			delete eventQueue.front(),
+		{
+			Event* e = eventQueue.front();
 			eventQueue.pop();
+			onEvent(*e);
+			delete (Event*)e;
+		}
 
 		baseUpdateApp = appList.end();
-		for (auto& app = appList.begin(); app != appList.end();)  // reset all polling Status
+		for (auto app = appList.begin(); app != appList.end();)  // reset all polling Status
 		{
 			status = (*app)->pollingUpdate();
 
@@ -93,7 +99,7 @@ void System::pollingUpdate()
 
 			if (!(*app)->getIsRun())
 			{
-				delete (*app);
+				delete (App*)(*app);
 				app = appList.erase(app);
 			}
 			else
@@ -109,13 +115,13 @@ void System::pollingUpdate()
 	}
 }
 
-void System::update(std::list<App*>::iterator& _app)
+void System::update(std::list<App*>::iterator _app)
 {
 	if (isForceRefresh)
 		canvas.flush(), _app = appList.begin(), isForceRefresh = false;
 
-	for (auto& app = _app; app != appList.end(); app++)  // render from top to _app
-		for (auto& window : (*app)->getWindowList())
+	for (auto app = _app; app != appList.end(); app++)  // render from top to _app
+		for (const auto& window : (*app)->getWindowList())
 			canvas.renderWindow(*window);
 
 	// msgThread
@@ -142,7 +148,7 @@ void System::update(std::list<App*>::iterator& _app)
 
 void System::onEvent(Event& e)  // from input
 {
-	if (e.getType() == Event::shutdown)
+	if (e.getType() == Event::shutDown)
 		for (auto& app : appList)
 			app->onEvent(e);
 	else if (e.getType() == Event::resize)
@@ -181,7 +187,7 @@ void System::onEvent(Event& e)  // from input
 void System::onResizeEvent(short width, short height)
 {
 	auto *e = new ResizeEvent(width, height, float(width) / MY_WINDOW_WIDTH, float(height) / MY_WINDOW_HEIGHT);
-	eventQueue.push(e);
+	eventQueue.emplace(e);
 }
 void System::onKeyPrsEvent(unsigned short key, WCHAR unicodeChar)
 {
@@ -244,25 +250,25 @@ void System::onKeyPrsEvent(unsigned short key, WCHAR unicodeChar)
 	case Event::mouseMove:
 	{
 		auto *e = new MouseMoveEvent(mouse.X - mouse.offsetX, mouse.Y - mouse.offsetY, mouse.offsetX, mouse.offsetY, mouse.isPrs);
-		eventQueue.push(e);
+		eventQueue.emplace(e);
 		break;
 	}
 	case Event::mousePrs:
 	{
 		auto *e = new MousePrsEvent(mouse.X, mouse.Y, PollingInput::mouse_l1);
-		eventQueue.push(e);
+		eventQueue.emplace(e);
 		break;
 	}
 	case Event::mouseRls:
 	{
 		auto *e = new MouseRlsEvent(mouse.X, mouse.Y);
-		eventQueue.push(e);
+		eventQueue.emplace(e);
 		break;
 	}
 	case Event::keyPrs:
 	{
 		auto *e = new KeyPrsEvent(key, unicodeChar);
-		eventQueue.push(e);
+		eventQueue.emplace(e);
 		break;
 	}
 	}
@@ -277,7 +283,7 @@ void System::onMouseMoveEvent(int X, int Y)
 	if (mouse.offsetX || mouse.offsetY)
 	{
 		auto *e = new MouseMoveEvent(mouse.X, mouse.Y, mouse.offsetX, mouse.offsetY, mouse.isPrs);
-		eventQueue.push(e);
+		eventQueue.emplace(e);
 		mouse.X = X, mouse.Y = Y;
 	}
 }
@@ -288,7 +294,7 @@ void System::onMousePrsEvent(PollingInput input)
 		mouse.isPrs = true;
 
 	auto *e = new MousePrsEvent(mouse.X, mouse.Y, input);
-	eventQueue.push(e);
+	eventQueue.emplace(e);
 }
 void System::onMouseRlsEvent()
 {
@@ -298,7 +304,7 @@ void System::onMouseRlsEvent()
 		mouse.isPrs = false;
 
 		auto *e = new MouseRlsEvent(mouse.X, mouse.Y);
-		eventQueue.push(e);
+		eventQueue.emplace(e);
 	}
 }
 

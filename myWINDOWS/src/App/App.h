@@ -4,7 +4,9 @@
 #include "Window/Window.h"
 #include "Window/Collection/DevToolWindow.h"
 
-#define push_window(window_ptr, window_entity) window_ptr.reset(new window_entity), pushWindow(window_ptr)
+//#define push_window(window_ptr, window_entity) window_ptr.reset(new window_entity), pushWindow(window_ptr)
+#define push_window( sWindow, pWindow) _push_window(sWindow, new pWindow)
+
 
 class System;
 
@@ -12,7 +14,8 @@ enum class AppCollection { unknown, Desktop, Settings, Painter, Chess, CubeViewe
 class App
 {
 public:
-	App(AppCollection app, UINT id) : app(app), id(id) {}
+	App(AppCollection app, UINT id) : app(app), id(id) { }
+	virtual ~App() { }
 
 	friend System;
 
@@ -31,6 +34,7 @@ public:
 		windowList.emplace_back(window), window->setId(unsigned int(windowList.size() - 1)), window->refresh();
 	}
 protected:
+	void _push_window(std::shared_ptr<Window>& sWindow, Window* pWindow) { sWindow.reset(pWindow); pushWindow(sWindow); }
 	void closeApp() { isRun = false; }
 private:
 	AppCollection app;

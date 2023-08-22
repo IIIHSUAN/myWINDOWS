@@ -7,9 +7,10 @@ enum class Status { none, handled, needUpdate, refresh };
 class Event
 {
 public:
-	enum Type { unknown, mouseMove, mousePrs, mouseRls, keyPrs, recv, resize, windowResize, shutdown };
+	enum Type { unknown, mouseMove, mousePrs, mouseRls, keyPrs, recv, resize, windowResize, shutDown };
 
 	Event(Type type) :type(type) {}
+	virtual ~Event() {}
 	
 	inline Type& getType() { return type; }
 protected:
@@ -263,5 +264,5 @@ class RecvEvent :public Event
 class ShutdownEvent :public Event
 {
 public:
-	ShutdownEvent() : Event(Event::shutdown) {}
+	ShutdownEvent() : Event(Event::shutDown) {}
 };

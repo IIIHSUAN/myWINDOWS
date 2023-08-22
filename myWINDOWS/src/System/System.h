@@ -58,8 +58,8 @@ private:
 	short pollingPeriod = 20;  // millisecond
 	void pollingUpdate();
 	std::list<App*> appList;
-	void update(std::list<App*>::iterator& app);
-	Canvas canvas = Canvas({ 0,0 }, { MY_WINDOW_WIDTH,MY_WINDOW_HEIGHT }, false, L' ');
+	void update(std::list<App*>::iterator app);
+	Canvas canvas = Canvas({ 0,0 }, { MY_WINDOW_WIDTH,MY_WINDOW_HEIGHT }, false, TRANSPARENT_WCHAR);
 	Pos appStartPos = { 0,0 };
 
 	std::queue<Event*> eventQueue;

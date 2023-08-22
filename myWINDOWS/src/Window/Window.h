@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <list>
 
 #include "Event.h"
@@ -26,6 +27,7 @@ class Window
 {
 public:
 	Window(std::wstring _name, Pos _pos, Size _size, const wchar_t flushChar = WHITESPACE_WCHAR, WindowCollection window = WindowCollection::default);
+	virtual ~Window() { }
 
 	friend class App;
 	friend class Elements;
@@ -40,7 +42,7 @@ public:
 	inline std::list<std::shared_ptr<Elements>>& getElementsList() { return elementsList; }
 	inline const bool& getIsRun() { return isRun; }
 
-	inline void setTitle(std::wstring& str) { title = str; }
+	inline void setTitle(std::wstring str) { title = str; }
 	inline void setId(unsigned int i) { id = i; }
 
 	inline void setRecieveCallback	 (std::function<void(std::string)> func)		{ recvCallback = func; };
@@ -49,6 +51,7 @@ public:
 	inline void setKeyPrsCallback	 (std::function<bool(KeyPrsEvent)> func)		{ keyPrsCallback = func; };
 	inline void setResizeCallback	 (std::function<void(WindowResizeEvent)> func)	{ resizeCallback = func; };
 	inline void setPollingCallback	 (std::function<Status(void)> func)				{ pollingCallback = func; };
+	inline void setCloseCallback	 (std::function<void()> func)				    { closeCallback = func; };
 
 	Status pollingUpdate();
 
@@ -89,6 +92,7 @@ private:
 	std::function<bool(KeyPrsEvent)> keyPrsCallback = nullptr;
 	std::function<void(std::string)> recvCallback = nullptr;
 	std::function<Status(void)> pollingCallback = nullptr;
+	std::function<void()> closeCallback = nullptr;
 
 	// run default
 	bool _onMouseMove(MouseMoveEvent e);

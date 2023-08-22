@@ -2,12 +2,14 @@
 
 #include "App/App.h"
 
-class Painter;
-
 class PainterWindow : public Window
 {
 public:
-	PainterWindow(std::wstring _name, Pos _pos, Size _size) : Window(_name, _pos, _size) {}
+	PainterWindow(std::wstring _name, Pos _pos, Size _size) : Window(_name, _pos, _size) {
+		push_elements(div, Div({ Left(0),Top(0) }, { _size.width,_size.height }, *this));
+	}
+
+	std::shared_ptr<Div> div;
 };
 
 
@@ -15,18 +17,21 @@ class Painter :public App
 {
 public:
 	Painter(Pos pos = { 2,1 }, UINT id = 0) : App(AppCollection::Painter, id) {
-		push_window(window, PainterWindow(L"Painter", pos, { 40,MY_WINDOW_HEIGHT - 10 }));
+		push_window(painterWindow, PainterWindow(L"Painter", pos, { 40,MY_WINDOW_HEIGHT - 10 }));
 
-		window->setMouseMoveCallback([this](MouseMoveEvent& e) {
-			e.setPos({ e.getMouseX() + e.getOffsetX() - window->getX() , e.getMouseY() + e.getOffsetY() - window->getY() });
+		painterWindow->setMouseMoveCallback([this](MouseMoveEvent& e) {
+			if (!e.getIsPrs())
+				return;
 
-			if (e.getIsPrs() &&
-				e.getMouseX() > 0 && e.getMouseX() < window->getSize().width - 1 &&
-				e.getMouseY() > 0 && e.getMouseY() < window->getSize().height - 1)
-				window->getCanvas().line(e.getMouseX() + 2, e.getMouseY() + 2, L"❉", 1);
+			painterWindow->setTitle(L"Painter (" + std::to_wstring(e.getMouseX()) + L", " + std::to_wstring(e.getMouseY()) + L")");
+			((PainterWindow&)(*painterWindow)).div->getCanvas().line(e.getMouseX(), e.getMouseY(), L"❉", 1);
+		});
+
+		painterWindow->setResizeCallback([this](WindowResizeEvent& e) {
+			((PainterWindow&)(*painterWindow)).div->getCanvas().setSize(e.getSize());
 		});
 	}
 
 private:
-	std::shared_ptr<Window> window;
+	std::shared_ptr<Window> painterWindow;
 };

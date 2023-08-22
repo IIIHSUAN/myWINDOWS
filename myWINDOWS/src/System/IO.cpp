@@ -194,7 +194,7 @@ Output::Output()
 
 	HWND console = GetConsoleWindow();
 	ShowScrollBar(console, SB_BOTH, FALSE);
-	SetConsoleTitle(TEXT("Dead by Daylight"));
+	SetConsoleTitle(TEXT("C++ Browser Engine"));
 }
 
 void Output::display(const std::wstring& pixels)

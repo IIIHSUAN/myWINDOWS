@@ -33,7 +33,7 @@ bool Window::onEvent(Event & e)
 	case Event::resize:
 		_onResize((ResizeEvent&)e);
 		break;
-	case Event::shutdown:
+	case Event::shutDown:
 		isRun = false;
 		break;
 	}
@@ -110,11 +110,12 @@ bool Window::_onMouseMove(MouseMoveEvent e)
 		isForceRefresh = true;
 		return true;
 	}
+	else {
+		elementsOnEvent(e);
 
-	elementsOnEvent(e);
-
-	if (mouseMoveCallback) mouseMoveCallback(e);
-	return true;
+		if (mouseMoveCallback) mouseMoveCallback(e);
+		return true;
+	}
 }
 bool Window::_onMousePrs(MousePrsEvent e)
 {
@@ -126,6 +127,7 @@ bool Window::_onMousePrs(MousePrsEvent e)
 
 	// click close
 	if ((e.getMouseY() == 0) && (e.getMouseX() > size.width - 6 && e.getMouseX() < size.width - 2)) {
+		if (closeCallback) closeCallback();
 		isRun = false, isForceRefresh = true;
 		return true;
 	}
@@ -201,7 +203,7 @@ void Window::elementsOnEvent(Event & e)  // from _on... (Window default EventFun
 		case Event::windowResize:
 			(*ele)->onWindowResize((WindowResizeEvent&)e);
 			break;
-		case Event::shutdown:
+		case Event::shutDown:
 			break;
 		}
 
@@ -216,7 +218,8 @@ void Window::refresh()
 
 	// render Elements
 	for (auto& ele = elementsList.begin(); ele != elementsList.end(); ele++)
-		canvas.renderWith((*ele)->getCanvas());
+		if((*ele)->info.isVisible)
+			canvas.renderWith((*ele)->getCanvas());
 
 	canvas.frame();
 	canvas.line(3, 0, L"  " + title + L"  "), canvas.line(size.width - 5, 0, L"  x ");

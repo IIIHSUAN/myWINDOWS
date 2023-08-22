@@ -250,7 +250,7 @@ Inputbox::Inputbox(const wchar_t * cstr, Pos4 pos4, Window& window, int len, boo
 	canvas = Canvas(pos4, { len + 2,3 }, parent, isFrame, WHITESPACE_WCHAR);
 
 	// update canvas
-	flush();
+	Elements::flush();
 
 	// pollingCallback
 	setPollingCallback([this]() {
@@ -381,4 +381,16 @@ void Paragraph::flush_impl(wchar_t flushChar)
 		if (end == breakInd)
 			i--;
 	} while (end != str.length() && i < canvas.getSize().height - padding.height);
+}
+
+/* Div ****************************************************/
+
+Div::Div(Pos4 pos4, Size2 size2, Window& window, bool isFrame, Size padding, wchar_t flushChar)
+	: padding(padding), Elements(ElementsType::Div, window.getCanvas())
+{
+	// set values
+	canvas = Canvas(pos4, size2, parent, isFrame, flushChar);
+
+	// update canvas
+	Elements::flush();
 }
