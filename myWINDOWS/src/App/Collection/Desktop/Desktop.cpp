@@ -68,12 +68,12 @@ void DesktopWindow::animJenny()
 					iJenny->animate(Animate({ Left(15, vw), Bottom(14, px) }, 300, Easing::easeOutCubic), [this]() {
 						// sleep 3000 (anim same place so resize will adjust)
 						iJenny->animate(Animate({ Left(15, vw), Bottom(14, px) }, 3000), [this]() {
-							// bye run
+							// sprint run start
 							iJenny->animate(Animate({ Left(40, vw), Bottom(20, px) }, 2000, Easing::easeInElastic), [this]() {
-								// run land
-								iJenny->animate(Animate({ Left(80, vw), Bottom(15, px) }, 700), [this]() {
-									iJenny->animate(Animate({ Right(-50, px), Bottom(1, px) }, 500), [this]() {
-										// to the left
+								// run landing
+								iJenny->animate(Animate({ Left(80, vw), Bottom(15, px) }, 400), [this]() {
+									// out of screen
+									iJenny->animate(Animate({ Right(-50, px), Bottom(1, px) }, 300), [this]() {
 										iJenny->getAnimate().sleep(2000);
 										iJenny->setPos4({ Left(-50, px), Bottom(-5, px) });
 										iJenny->animate(Animate({ Left(5, vw), Bottom(20, px) }, 500), [this]() {
@@ -95,7 +95,7 @@ void DesktopWindow::animHan()
 	iHan->animate(Animate({ Right(10,vw),Bottom(-26,px) }, 15000), [this]() {
 		iHan->animate(Animate({ Right(10,vw),Bottom(1,px) }, 2000), [this]() {
 			// simulate sleep
-			iHan->animate(Animate({ Right(10,vw),Bottom(1,px) }, 3000), [this]() {
+			iHan->animate(Animate({ Right(10,vw),Bottom(1,px) }, 5000), [this]() {
 				iHan->animate(Animate({ Right(10,vw),Bottom(-26,px) }, 2000), [this]() {
 					animHan();
 				});
