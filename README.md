@@ -1,7 +1,5 @@
 ![image](https://github.com/IIIHSUAN/myWINDOWS/assets/53747303/3837b701-ee4b-42a9-9f5b-926fe517d9fe)# C++ Retro ASCII Browser Engine | C++ Retro 像素瀏覽器引擎
 
-![Graph (1)](https://github.com/IIIHSUAN/myWINDOWS/assets/53747303/807bad4f-5d32-4ecf-885f-f155b2f2db35)
-
 [C++ Retro ASCII Browser Engine | C++ Retro 像素瀏覽器引擎 - YouTube](https://www.youtube.com/watch?v=RFosePU5LI8&ab_channel=shibacookie)
 
 ## English Intro
