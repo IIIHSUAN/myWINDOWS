@@ -1,4 +1,4 @@
-# C++ Retro ASCII Browser Engine | C++ Retro 像素瀏覽器引擎
+# GUI System - C++ Retro ASCII Browser Engine
 
 ![Graph (1)](https://github.com/IIIHSUAN/myWINDOWS/assets/53747303/807bad4f-5d32-4ecf-885f-f155b2f2db35)
 
