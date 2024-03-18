@@ -4,7 +4,7 @@
 
 [Demo Video - GUI System within a Terminal Display - YouTube](https://www.youtube.com/watch?v=RFosePU5LI8&ab_channel=shibacookie)
 
-### Intro
+### Project Overview
 
 By this project, explore and get a thorough understanding of GUI system's core concepts such as:
 - graphics rendering techniques 
@@ -78,7 +78,7 @@ In the future, it can be integrated into cross-platform GUI frameworks, such as 
 - **System Core:** Developed the core system based on the workings of .NET Framework and JavaScript in web browsers.
 - **Browser Infrastructures:** Implemented window screen rendering and animations using concepts from the Document Object Model (DOM) and Cascading Style Sheets (CSS) in web pages.
 
-### Development
+### Development Details
 
 Extended from my OOP course's project of *Command-line Interface*:
 
@@ -124,7 +124,7 @@ The interesting aspect here lay in the initial approach taken to achieve real-ti
     1. Layout parameter computation, screen rendering.
     1. Outputting visuals.
 
-### Issues
+### Discussions
 
 - **Tradeoffs:** While this approach could resolve the issue of synchronous race conditions, it also gave rise to other concerns. For instance, when the main *rendering process* was busy, due to the single-threaded nature, rendering tasks may be postponed, resulting in delays. This characteristic mirrors the behavior observed when running JavaScript in webpages.
-- **Virtualization:** Similar to the applications of other virtual machines, such as Java's own virtual environment, which enables Java applications to run on different machines, blurring the boundaries between underlying hardware differences. The ultimate goal is to create a unified user and developer experience, thereby fully dominating the Java kingdom of computing platforms.
+- **Virtualization:** Similar to the applications of other virtual machines, such as Java's own virtual environment, which enables Java applications to run on different machines, eliminating the boundaries between underlying hardware differences. The ultimate goal is to create a unified user and developer experience, thereby fully dominating the Java kingdom of computing platforms.
